@@ -1,6 +1,6 @@
 # Red Five — initial descriptive analysis plan
 
-Version: `red-five-descriptive/v2`. Status: development fixtures only.
+Version: `red-five-descriptive/v3`. Status: development fixtures only.
 Decision owner: Josh; no consequential model approval has been granted.
 
 ## Estimand and sample
@@ -45,7 +45,26 @@ See [the full calculation contract](docs/QUANTILES.md).
 This extension does not establish independent observations or upstream out-of-sample
 predictions and is not portfolio weighting. No confidence intervals or significance
 claim. Bin/cutoff choices must be registered before a future confirmatory study;
-post-outcome tuning belongs in the still-unimplemented trial ledger.
+post-outcome tuning must be recorded as another trial, not treated as presentation.
+
+## Declared fold and local trial extension
+
+Explicit half-open test windows are ordered and nonoverlapping within an audit.
+Training decisions precede test start minus a declared elapsed-time gap; training
+labels must be nonmissing and available strictly before that boundary. This
+conservative population filter also applies to fold-local score binning, unlike
+the original score-only fixed-cutoff API. Numeric training returns never determine
+bin boundaries. Test metrics use report-time label maturity and retain exclusions.
+Every original row is accounted for in fold membership; sections retain fold
+policy, test identities and hashes, without certifying upstream model training.
+
+The local journal registers each wrapper request before computation and retains
+computed, unavailable, failed and unfinished attempts. It binds specification and
+input hashes to exact section evidence. Historical search completeness remains
+unknown, including searches outside the wrapper. Family IDs do not select or
+validate a multiplicity policy. Nonoverlapping decision windows do not imply
+independent labels; no combined significance or locked final assessment is added.
+See [the temporal/trial contract](docs/TEMPORAL_TRIALS.md).
 
 ## Supplied portfolio accounting
 

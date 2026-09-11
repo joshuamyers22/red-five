@@ -94,3 +94,8 @@ limit is 200 output rows (including group × bin expansion); larger analyses fai
 closed rather than silently truncate. Figures page at 20 rows.
 
 See [verification](QUANTILE_VERIFICATION.md) and [ADR 0004](adr/0004-fixed-quantile-bins.md).
+
+For declared fold windows and conservative training-label purging, use the separate
+[temporal/trial API](TEMPORAL_TRIALS.md). Its training eligibility is intentionally
+stricter than this original score-only fixed-cutoff API; neither certifies upstream
+out-of-sample fitting or supplies inference.

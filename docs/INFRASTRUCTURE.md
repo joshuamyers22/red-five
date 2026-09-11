@@ -13,7 +13,7 @@ secret scanning and release-readiness checklist. See `Makefile` and
 - `make notebook` installs the locked optional notebook group and starts JupyterLab
   on loopback with its normal token authentication. Do not disable authentication,
   bind to a public interface or commit the token URL. Stop it with Ctrl-C.
-- `make notebook-check` executes the synthetic notebook into ignored `build/`.
+- `make notebook-check` executes all four synthetic notebooks into ignored `build/`.
 - `make audit build` checks runtime dependencies/licenses and builds packages.
   CI separately audits the notebook dependency group after its execution check.
 
@@ -21,6 +21,12 @@ No credentials are needed for synthetic examples. Keep licensed/private inputs
 outside Git and report bundles in ignored `build/`; tracked notebooks have no
 saved outputs. The repository is public: notebook/report publication is a separate
 data-release decision. `verify-bundle` checks integrity, not publisher identity.
+
+The optional local trial journal uses standard-library SQLite transactions, not
+a database server. Journal files and sidecars are ignored by Git. Keep real trial
+history in a restricted, backed-up location, not disposable `build/`. The bounded
+synthetic notebook journal has no remote immutability or recovery guarantee; see
+`docs/TEMPORAL_TRIALS.md`. This is not the planned production registry.
 
 ## Before any scheduled or shared deployment
 

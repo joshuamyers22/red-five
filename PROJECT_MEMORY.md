@@ -35,6 +35,8 @@ Git history provides the audit trail.
 | `render-boundary` | Rendering is serial, limited to 200 groups/intervals and requires manifest verification; real bundles stay private. | `docs/REPORTING.md`, `tests/test_visualization.py` | 2026-09-11 |
 | `notebook-composition` | Independent sections, immutable selections/options, caller-owned axes and partial exports are implemented. `make notebook` opens the cookbook. | `docs/COMPOSITION.md`, `tests/test_composition.py`, `docs/COMPOSITION_VERIFICATION.md` | 2026-09-11 |
 | `quantile-boundaries` | Independent section v2 fits fixed pre-cutoff score bins, separately per time-series contract; CS uses per-model historical cuts and per-date evaluation. New notebook exposes means/counts/spread/monotonicity and partial exports; no inference or v1 full-report quantiles. | `docs/QUANTILES.md`, `tests/test_quantiles.py`, `docs/QUANTILE_VERIFICATION.md` | 2026-09-11 |
+| `fold-audits` | Explicit nonoverlapping test windows, every-row roles and conservative training-label purge feed independent descriptive fold sections; numeric models remain external and upstream OOS unverified. | `src/red_five/temporal.py`, `docs/TEMPORAL_TRIALS.md`, `tests/test_temporal_trials.py` | 2026-09-11 |
+| `local-trial-history` | SQLite journal registers before evaluation; preserves computed/unavailable/failed/unfinished attempts, rejects duplicate IDs, verifies chain/request linkage. Local history is not complete or externally anchored; fourth notebook demonstrates it. | `src/red_five/trials.py`, `docs/TEMPORAL_VERIFICATION.md` | 2026-09-11 |
 
 ## Verified traps and failed approaches
 
@@ -48,7 +50,7 @@ Git history provides the audit trail.
 | Key | Unresolved question or next evidence | Owner | Review by |
 |---|---|---|---|
 | `decision-policy` | Select hypothesis family, dependence-aware inference, holdout and thresholds before any verdict. | Josh / research | Before inference slice |
-| `next-slices` | Temporal folds, trial ledger and uncertainty precede consequential quantile/standalone inference; breadth, paired marginal replay and registry evidence follow the plan. | Unassigned | Next phase planning |
+| `next-slices` | Upstream fold-local provenance, nested/final assessment policy and dependence-aware uncertainty remain open; local fold audits/trial journaling do not close these gates. Breadth, paired marginal replay and production registry follow. | Unassigned | Next phase planning |
 | `reporting-followup` | Validate representative panel size, narrow/print accessibility and production artifact recovery before expanding local rendering limits. | Engineering / research; `docs/REPORTING.md` | Before production reporting |
 | `composition-followup` | Optional widgets, arbitrary layout/artist serialization and failed-section history remain future work; standard exports replay recorded options only. | Engineering / research; `docs/COMPOSITION.md` | When requested |
 | `production-gates` | Data licensing, calibrated costs, workload budget, recovery and monitoring ownership remain open. | Unassigned | Before deployment |

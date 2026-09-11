@@ -291,7 +291,12 @@ def test_svg_and_png_repeatable() -> None:
 
 @pytest.mark.parametrize(
     "name",
-    ["signal-report.ipynb", "composition-cookbook.ipynb", "quantile-diagnostics.ipynb"],
+    [
+        "signal-report.ipynb",
+        "composition-cookbook.ipynb",
+        "quantile-diagnostics.ipynb",
+        "temporal-trials.ipynb",
+    ],
 )
 def test_tracked_notebook_has_no_saved_outputs(name: str) -> None:
     notebook = json_object((ROOT / "notebooks" / name).read_bytes())

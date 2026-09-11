@@ -194,7 +194,7 @@ class SectionResult:
         return mapping(json_object(self.content).get("diagnostics", {}))
 
 
-def _seal(
+def seal_section(
     name: SectionName,
     config: dict[str, object],
     data: Table,
@@ -305,7 +305,7 @@ def evaluate_section(
             row["status"] == "unavailable" for row in values
         ):
             status = "unavailable"
-    return _seal(
+    return seal_section(
         name,
         declaration,
         table,
@@ -347,7 +347,7 @@ def section_from_report(view: ReportView, name: SectionName) -> SectionResult:
         row[table.columns.index("status")] == "unavailable" for row in table.rows
     ):
         status = "unavailable"
-    return _seal(
+    return seal_section(
         name,
         mapping(identity["config"]),
         table,

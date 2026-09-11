@@ -16,3 +16,7 @@ notebooks/.ipynb_checkpoints/
 .coverage
 htmlcov/
 data/processed/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm

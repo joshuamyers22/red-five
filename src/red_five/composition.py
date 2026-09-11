@@ -14,7 +14,7 @@ import polars as pl
 
 from .contracts import ContractError, EvaluationConfig
 from .sections import SectionResult
-from .visualization import Cell, Table
+from .visualization import Cell, Table, mapping, text_cell
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -207,12 +207,22 @@ class Panel:
     @property
     def caption(self) -> str:
         selected = self.selected_data()
+        details = self.section.diagnostics
+        fold_caption = ""
+        if "fold" in details:
+            fold = mapping(details["fold"])
+            fold_caption = (
+                f"fold {text_cell(fold['fold_id'])}; test "
+                f"[{text_cell(fold['test_start'])}, {text_cell(fold['test_end'])}); "
+                "upstream OOS unverified; "
+            )
         return (
             f"Partial {self.section.name}; {self.section.status}; no verdict; "
             f"displaying {len(selected.rows)}/{len(self.section.data.rows)} rows "
             f"({len(self.section.data.rows) - len(selected.rows)} omitted); "
             f"{self.config.mode}; {self.config.return_kind} signal target; "
             f"{self.config.horizon}; as-of {self.config.as_of.isoformat()}; "
+            f"{fold_caption}"
             f"section {self.run_id}"
         )
 

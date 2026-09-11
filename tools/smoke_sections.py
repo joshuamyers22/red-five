@@ -10,6 +10,8 @@ from red_five.composition import PlotOptions, Selection
 from red_five.quantiles import QuantileConfig
 from red_five.rendering import verify_bundle
 from red_five.sections import evaluate_section
+from red_five.temporal import FoldSpec, audit_folds
+from red_five.trials import TrialLedger
 
 
 def main() -> None:
@@ -45,6 +47,26 @@ def main() -> None:
     assert verify_bundle(args.output)["scope"] == "partial"
     assert panel.table().height == 1
     assert quantiles.table().height == 5
+    fold = FoldSpec(
+        "wheel", "2026-01-01T00:00:00Z", "2026-01-21T00:00:00Z", "2026-01-26T00:00:00Z"
+    )
+    signals = (root / "examples/quantile-signals.csv").read_bytes()
+    config = (root / "examples/quantile-evaluation.json").read_bytes()
+    assert len(audit_folds(signals, config, (fold,)).membership.rows) == 70
+    ledger = TrialLedger(args.output.with_name(args.output.name + "-trials.sqlite"))
+    result = ledger.run(
+        "wheel-trial",
+        "synthetic",
+        "quantiles",
+        signals,
+        config,
+        (root / "STATISTICAL_ANALYSIS_PLAN.md").read_bytes(),
+        (root / "uv.lock").read_bytes(),
+        fold=fold,
+        quantiles=QuantileConfig(fold.test_start, 5, 15, 1),
+    )
+    assert result.status == "computed"
+    assert ledger.table().dataframe()["status"].to_list() == ["computed"]
     print("Installed section API and partial bundle verified")
 
 

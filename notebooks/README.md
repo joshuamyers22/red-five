@@ -8,6 +8,11 @@ Open `quantile-diagnostics.ipynb` for independent frozen-bin means, coverage,
 spread/monotonicity tables and model-specific plots. See `docs/QUANTILES.md` for
 the explicit cutoff, tie policy and descriptive-only limitations.
 
+Open `temporal-trials.ipynb` for fold audits, row membership, individually registered
+fold sections and retained failure history. The local journal persists under
+`build/`; reruns create new attempts rather than overwrite existing trials. See
+`docs/TEMPORAL_TRIALS.md` for purge rules and research-history limitations.
+
 For the original full-report workflow, open `signal-report.ipynb`,
 then run all cells. It generates a synthetic report through production functions,
 displays the shared report view and exports a verified bundle under ignored
@@ -17,7 +22,7 @@ synthetic-generation cell. `view.table()` returns a Polars frame;
 
 Launch through `make notebook` so the kernel uses the project's locked environment.
 Do not expose Jupyter beyond loopback or disable its authentication. CI uses
-`make notebook-check` to execute all three; tracked notebooks contain no cell outputs.
+`make notebook-check` to execute all four; tracked notebooks contain no cell outputs.
 
 Use notebooks for exploration and communication. Import production calculations
 from `src/`; do not maintain a second implementation in cells. Clear sensitive

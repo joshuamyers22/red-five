@@ -1,8 +1,10 @@
 # Notebook composition
 
 Run `make notebook` to open `notebooks/composition-cookbook.ipynb`. The original
-full-report notebook remains available; `make notebook-check` executes all three,
-including the [quantile notebook](../notebooks/quantile-diagnostics.ipynb).
+full-report notebook remains available; `make notebook-check` executes all four,
+including the [quantile notebook](../notebooks/quantile-diagnostics.ipynb) and
+[fold/trial notebook](../notebooks/temporal-trials.ipynb). Fold evaluators return the
+same section API with explicit window/provenance captions; see [fold contracts](TEMPORAL_TRIALS.md).
 
 ## Independent sections
 
