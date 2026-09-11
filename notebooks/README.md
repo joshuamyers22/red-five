@@ -1,6 +1,10 @@
 # Notebooks
 
-Start with `signal-report.ipynb`: run `make notebook` from the repository root,
+Start with `composition-cookbook.ipynb`: `make notebook` opens independent section
+evaluation, styling, caller-owned subplots and partial exports. See
+`docs/COMPOSITION.md` for the API and display-versus-evaluation boundary.
+
+For the original full-report workflow, open `signal-report.ipynb`,
 then run all cells. It generates a synthetic report through production functions,
 displays the shared report view and exports a verified bundle under ignored
 `build/`. To inspect your own report, use `load_report(path)` instead of the
@@ -9,7 +13,7 @@ synthetic-generation cell. `view.table()` returns a Polars frame;
 
 Launch through `make notebook` so the kernel uses the project's locked environment.
 Do not expose Jupyter beyond loopback or disable its authentication. CI uses
-`make notebook-check`; the tracked notebook deliberately contains no cell outputs.
+`make notebook-check` executes both; tracked notebooks contain no cell outputs.
 
 Use notebooks for exploration and communication. Import production calculations
 from `src/`; do not maintain a second implementation in cells. Clear sensitive

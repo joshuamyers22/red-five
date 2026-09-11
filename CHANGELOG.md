@@ -4,6 +4,10 @@ Notable changes are recorded here using semantic versioning.
 
 ## Unreleased
 
+- Added independent standalone/coverage/economics sections, configurable notebook
+  panels, caller-owned subplot/overlay support and verified partial exports.
+- Added a composition cookbook and installed-wheel section API smoke test.
+
 - Added immutable notebook views, Polars tables, Matplotlib figures and verified
   offline HTML/CSV/SVG/PNG bundles for descriptive evidence.
 - Added a runnable synthetic Jupyter notebook, locked notebook dependencies,

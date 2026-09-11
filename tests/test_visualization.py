@@ -289,8 +289,9 @@ def test_svg_and_png_repeatable() -> None:
         )
 
 
-def test_tracked_notebook_has_no_saved_outputs() -> None:
-    notebook = json_object((ROOT / "notebooks/signal-report.ipynb").read_bytes())
+@pytest.mark.parametrize("name", ["signal-report.ipynb", "composition-cookbook.ipynb"])
+def test_tracked_notebook_has_no_saved_outputs(name: str) -> None:
+    notebook = json_object((ROOT / "notebooks" / name).read_bytes())
     for item in sequence(notebook["cells"]):
         cell = mapping(item)
         if cell["cell_type"] == "code":

@@ -55,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
             from .rendering import verify_bundle
 
             manifest = verify_bundle(args.input)
-            report = {"run_id": manifest["run_id"], "status": "verified"}
+            report = {"run_id": manifest.get("run_id"), "status": "verified"}
         elif args.command == "verify":
             report = verify_report(read_bytes(args.input))
         else:

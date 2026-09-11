@@ -29,6 +29,7 @@ jobs:
           "$project_dir/build/wheel-smoke/bin/red-five" verify "$project_dir/build/wheel-report.json"
           "$project_dir/build/wheel-smoke/bin/red-five" render "$project_dir/build/wheel-report.json" --output-dir "$project_dir/build/wheel-bundle"
           "$project_dir/build/wheel-smoke/bin/red-five" verify-bundle "$project_dir/build/wheel-bundle"
+          "$project_dir/build/wheel-smoke/bin/python" "$project_dir/tools/smoke_sections.py" "$project_dir" "$project_dir/build/wheel-components"
       - name: Execute synthetic notebook
         run: make notebook-check
       - name: Audit notebook environment

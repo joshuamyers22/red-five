@@ -18,6 +18,8 @@ import polars as pl
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
+    from .sections import SectionName, SectionResult
+
 from .contracts import ContractError, EvaluationConfig
 from .reporting import verify_report
 from .signal_io import MAX_BYTES, read_bytes
@@ -277,6 +279,12 @@ class ReportView:
         from .rendering import export_bundle
 
         return export_bundle(self, Path(output_dir))
+
+    def section(self, name: SectionName) -> SectionResult:
+        """Extract an independently usable section without recalculation."""
+        from .sections import section_from_report
+
+        return section_from_report(self, name)
 
 
 def load_report(path: str | Path) -> ReportView:

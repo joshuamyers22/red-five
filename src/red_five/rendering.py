@@ -10,17 +10,21 @@ import io
 import math
 import re
 import shutil
+from collections.abc import Callable
 from html import escape
 from importlib.metadata import version
 from pathlib import Path
 from textwrap import fill
 from time import monotonic
+from weakref import WeakKeyDictionary
 
 import matplotlib as mpl
+from matplotlib.axes import Axes
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 from matplotlib.typing import RcKeyType
 
+from .composition import DEFAULT_PLOT, PlotOptions, PlotSource
 from .contracts import ContractError
 from .reporting import canonical, source_identity
 from .signal_io import digest, json_object, read_bytes
@@ -42,6 +46,7 @@ STYLE: dict[RcKeyType, object] = {
     "grid.color": "white",
     "axes.axisbelow": True,
 }
+AXIS_CONTEXT: WeakKeyDictionary[Axes, tuple[object, ...]] = WeakKeyDictionary()
 
 
 def table_for(kind: str) -> str:
@@ -52,20 +57,75 @@ def table_for(kind: str) -> str:
     return "signals" if kind in KINDS[:2] else "economics"
 
 
-def make_figure(view: ReportView, kind: str, page: int = 0) -> Figure:
-    table = view.tables[table_for(kind)]
+def make_figure(
+    view: PlotSource,
+    kind: str,
+    page: int = 0,
+    *,
+    ax: Axes | None = None,
+    options: PlotOptions = DEFAULT_PLOT,
+) -> Figure:
+    table_name = table_for(kind)
+    if table_name not in view.tables:
+        raise ContractError("plot evidence not requested")
+    table = view.tables[table_name]
     pages = max(1, math.ceil(len(table.rows) / PAGE_SIZE))
-    if isinstance(page, bool) or not 0 <= page < pages:
+    if type(page) is not int or not 0 <= page < pages:
         raise ContractError("figure page outside available range")
     rows = table.rows[page * PAGE_SIZE : (page + 1) * PAGE_SIZE]
-    with mpl.rc_context(STYLE):
-        fig = Figure(figsize=(11, 5), layout="constrained")
-        fig.set_label(f"{view.run_id}-{kind}-{page}")
-        fig.suptitle(fill(view.caption, width=115), fontsize=8)
-        FigureCanvasAgg(fig)
-        ax = fig.subplots()
-        ax.set_title(f"{kind.title()} — page {page + 1}/{pages}")
-        ax.set_xlabel("Evaluation group (full identity and exact values in table)")
+    allowed = {
+        "correlations": ("pearson_ic", "rank_ic"),
+        "coverage": (
+            "eligible_observations",
+            "immature_labels",
+            "missing_mature_labels",
+        ),
+        "returns": ("gross_return", "net_return"),
+        "costs": ("trading_cost_return", "holding_cost_return"),
+    }[kind]
+    fields = options.metrics or allowed
+    if any(field not in allowed or field not in table.columns for field in fields):
+        raise ContractError("metric not available for this plot")
+    identity_count = (
+        2 if table_name == "economics" or view.config.mode == "cross_sectional" else 3
+    )
+    context = (
+        kind,
+        view.config.mode,
+        view.config.return_kind,
+        view.config.horizon,
+        view.config.calendar,
+        tuple(row[:identity_count] for row in rows),
+        options.yscale,
+        options.ylim,
+    )
+    if (
+        ax is not None
+        and ax.has_data()
+        and (not options.overlay or AXIS_CONTEXT.get(ax) != context)
+    ):
+        raise ContractError("occupied axes require an explicitly compatible overlay")
+    with mpl.rc_context({**STYLE, "font.size": options.font_size}):
+        if ax is None:
+            fig = Figure(figsize=options.figsize, dpi=options.dpi, layout="constrained")
+            fig.set_label(f"{view.run_id}-{kind}-{page}")
+            fig.suptitle(fill(view.caption, width=115), fontsize=8)
+            FigureCanvasAgg(fig)
+            ax = fig.subplots()
+        else:
+            owner = ax.get_figure()
+            if not isinstance(owner, Figure):
+                raise ContractError("axes must belong to a Figure")
+            fig = owner
+            ax.text(
+                0, -0.55, fill(view.caption, 100), transform=ax.transAxes, fontsize=6
+            )
+        AXIS_CONTEXT[ax] = context
+        ax.set_title(options.title or f"{kind.title()} — page {page + 1}/{pages}")
+        ax.set_xlabel(
+            options.xlabel
+            or "Evaluation group (full identity and exact values in table)"
+        )
         if not rows:
             ax.text(
                 0.5,
@@ -75,17 +135,7 @@ def make_figure(view: ReportView, kind: str, page: int = 0) -> Figure:
                 ha="center",
             )
             return fig
-        fields = {
-            "correlations": ("pearson_ic", "rank_ic"),
-            "coverage": (
-                "eligible_observations",
-                "immature_labels",
-                "missing_mature_labels",
-            ),
-            "returns": ("gross_return", "net_return"),
-            "costs": ("trading_cost_return", "holding_cost_return"),
-        }[kind]
-        colors = ("#0072B2", "#D55E00", "#009E73")
+        colors = options.colors
         width = 0.8 / len(fields)
         for j, field in enumerate(fields):
             index = table.columns.index(field)
@@ -100,22 +150,19 @@ def make_figure(view: ReportView, kind: str, page: int = 0) -> Figure:
                 ax.scatter(
                     positions,
                     values,
-                    label=field,
-                    color=colors[j],
-                    marker=("o", "x")[j],
+                    label=options.label_prefix + field,
+                    color=colors[j % len(colors)],
+                    marker=options.markers[j % len(options.markers)],
                 )
             else:
                 ax.bar(
                     positions,
                     values,
                     width=width,
-                    label=field,
-                    color=colors[j],
+                    label=options.label_prefix + field,
+                    color=colors[j % len(colors)],
                     hatch=("", "//", "..")[j],
                 )
-        identity_count = 3 if view.config.mode == "time_series" else 2
-        if table_for(kind) == "economics":
-            identity_count = 2
         labels = [" / ".join(str(v) for v in row[:identity_count]) for row in rows]
         ax.set_xticks(
             list(range(len(rows))),
@@ -136,17 +183,29 @@ def make_figure(view: ReportView, kind: str, page: int = 0) -> Figure:
                 if kind == "coverage"
                 else "Fraction of pre-trade NAV; supplied total-return intervals"
             )
-        ax.legend(loc="best")
+        ax.set_yscale(options.yscale)
+        if options.ylim is not None:
+            ax.set_ylim(options.ylim)
+        if options.ylim is not None or options.yscale != "linear":
+            ax.text(
+                0.01,
+                0.01,
+                "Custom axis range/scale; values may be clipped. See exact table.",
+                transform=ax.transAxes,
+                fontsize=7,
+            )
+        if options.legend:
+            ax.legend(loc="best")
         return fig
 
 
-def figure_bytes(figure: Figure, fmt: str) -> bytes:
+def figure_bytes(figure: Figure, fmt: str, *, dpi: int = 120) -> bytes:
     buffer = io.BytesIO()
     with mpl.rc_context({**STYLE, "svg.hashsalt": figure.get_label()}):
         figure.savefig(
             buffer,
             format=fmt,
-            dpi=120,
+            dpi=dpi,
             metadata={"Date": None} if fmt == "svg" else {"Software": "Red Five"},
         )
     return buffer.getvalue()
@@ -242,12 +301,18 @@ def export_bundle(view: ReportView, output: Path) -> Path:
         "files": {name: digest(content) for name, content in sorted(files.items())},
     }
     files["manifest.json"] = canonical(manifest)
+    return publish_bundle(files, output, verify_bundle)
+
+
+def publish_bundle(
+    files: dict[str, bytes], output: Path, verifier: Callable[[Path], dict[str, object]]
+) -> Path:
     if sum(map(len, files.values())) > MAX_BUNDLE_BYTES:
         raise ContractError("bundle exceeds render byte budget")
     if output.is_symlink():
         raise ContractError("bundle output may not be a symlink")
     if output.exists():
-        verify_bundle(output)
+        verifier(output)
         if all(
             (output / name).read_bytes() == content for name, content in files.items()
         ):
@@ -260,7 +325,7 @@ def export_bundle(view: ReportView, output: Path) -> Path:
         for name, content in files.items():
             with (output / name).open("xb") as stream:
                 stream.write(content)
-        verify_bundle(output)
+        verifier(output)
     except BaseException:
         shutil.rmtree(output)
         raise
@@ -271,6 +336,10 @@ def verify_bundle(output: Path) -> dict[str, object]:
     if output.is_symlink() or (output / "manifest.json").is_symlink():
         raise ContractError("bundle symlinks are forbidden")
     manifest = json_object(read_bytes(output / "manifest.json"))
+    if manifest.get("schema_version") == "red-five-components/v1":
+        from .component_export import verify_components
+
+        return verify_components(output)
     if manifest.get("schema_version") != SCHEMA:
         raise ContractError("unsupported render manifest")
     files = mapping(manifest.get("files"))

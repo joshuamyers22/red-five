@@ -25,10 +25,14 @@ uv run red-five verify build/example-report.json
 ## Visualize in Jupyter
 
 Run `make notebook` from the project directory to open
-[the example notebook](notebooks/signal-report.ipynb) in the locked local JupyterLab
-environment. Run all cells to generate synthetic evidence, display charts and
-tables, and export an offline report. No separate kernel installation is needed
-when launching this way. `make notebook-check` executes it headlessly.
+[the composition cookbook](notebooks/composition-cookbook.ipynb) in the locked local JupyterLab
+environment. Compute individual sections, select models, customize charts/tables,
+draw on your own subplot axes, and export only chosen components. No separate
+kernel installation is needed. `make notebook-check` executes both the cookbook
+and the original [full-report notebook](notebooks/signal-report.ipynb).
+
+See [the composition API](docs/COMPOSITION.md) for `evaluate_section`, `Selection`,
+`PlotOptions`, caller-owned axes, and partial exports. Existing full-report usage:
 
 ```python
 from red_five.visualization import load_report

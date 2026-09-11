@@ -54,7 +54,10 @@ def correlations(x: list[float], y: list[float], minimum: int) -> CorrelationMet
 
 
 def evaluate_groups(
-    rows: tuple[Prediction, ...], config: EvaluationConfig
+    rows: tuple[Prediction, ...],
+    config: EvaluationConfig,
+    *,
+    coverage_only: bool = False,
 ) -> list[dict[str, object]]:
     groups: dict[tuple[str, ...], list[Prediction]] = defaultdict(list)
     for row in rows:
@@ -68,10 +71,14 @@ def evaluate_groups(
     for key, sample in sorted(groups.items()):
         ready = [r for r in sample if r.label_available_at <= config.as_of]
         eligible = [r for r in ready if r.forward_return is not None]
-        metrics = correlations(
-            [r.signal for r in eligible],
-            [r.forward_return for r in eligible if r.forward_return is not None],
-            config.minimum_observations,
+        metrics = (
+            CorrelationMetrics(None, None, "not-requested")
+            if coverage_only
+            else correlations(
+                [r.signal for r in eligible],
+                [r.forward_return for r in eligible if r.forward_return is not None],
+                config.minimum_observations,
+            )
         )
         results.append(
             {
