@@ -4,6 +4,10 @@ Start with `composition-cookbook.ipynb`: `make notebook` opens independent secti
 evaluation, styling, caller-owned subplots and partial exports. See
 `docs/COMPOSITION.md` for the API and display-versus-evaluation boundary.
 
+Open `quantile-diagnostics.ipynb` for independent frozen-bin means, coverage,
+spread/monotonicity tables and model-specific plots. See `docs/QUANTILES.md` for
+the explicit cutoff, tie policy and descriptive-only limitations.
+
 For the original full-report workflow, open `signal-report.ipynb`,
 then run all cells. It generates a synthetic report through production functions,
 displays the shared report view and exports a verified bundle under ignored
@@ -13,7 +17,7 @@ synthetic-generation cell. `view.table()` returns a Polars frame;
 
 Launch through `make notebook` so the kernel uses the project's locked environment.
 Do not expose Jupyter beyond loopback or disable its authentication. CI uses
-`make notebook-check` executes both; tracked notebooks contain no cell outputs.
+`make notebook-check` to execute all three; tracked notebooks contain no cell outputs.
 
 Use notebooks for exploration and communication. Import production calculations
 from `src/`; do not maintain a second implementation in cells. Clear sensitive

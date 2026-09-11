@@ -1,6 +1,6 @@
 # Red Five — initial descriptive analysis plan
 
-Version: `red-five-descriptive/v1`. Status: development fixtures only.
+Version: `red-five-descriptive/v2`. Status: development fixtures only.
 Decision owner: Josh; no consequential model approval has been granted.
 
 ## Estimand and sample
@@ -18,15 +18,34 @@ discovery study. Upstream availability metadata must be independently trustworth
 ## Implementation
 
 No regression, model selection, residualization or allocation fitting. No learned
-preprocessing, missing-value imputation or data-driven sign choice. Tied ranks use
+preprocessing except the declared training-only score boundaries below; no
+missing-value imputation or data-driven sign choice. Tied ranks use
 average rank. Constant scores/targets and too-small samples produce null metrics
 with reason codes. Do not square rank correlation and call it R².
 
 Apply feature availability at the decision and label availability at the report
 cutoff. Do not use immature labels even if a later-vintage input contains them.
 Model identity must be consistent with the declared mode. Predictive/causal claims,
-standard errors, p-values, quantile/decay fits and aggregate significance are deferred
+standard errors, p-values, decay fits and aggregate significance are deferred
 to an analysis plan defining temporal folds, label overlap and multiple testing.
+
+## Descriptive quantile extension
+
+Independently requested quantile sections require an explicit training cutoff,
+bin count, minimum training count and minimum eligible labels per bin. Fit only
+pre-cutoff scores, never training returns; freeze empirical inverse-CDF cuts for
+later evaluation. Time-series models remain separate by instrument/contract.
+Cross-sectional mode fits historical scores per model and reports each later date
+separately, not per-date equal-count ranks. Collapse ties; count out-of-range
+scores; preserve sparse and missing outcomes as null with reasons. Report bin
+means, high-minus-low descriptive spread and complete-bin monotonicity only.
+The exact policy, grouping, fit metadata and exclusions accompany section v2.
+See [the full calculation contract](docs/QUANTILES.md).
+
+This extension does not establish independent observations or upstream out-of-sample
+predictions and is not portfolio weighting. No confidence intervals or significance
+claim. Bin/cutoff choices must be registered before a future confirmatory study;
+post-outcome tuning belongs in the still-unimplemented trial ledger.
 
 ## Supplied portfolio accounting
 

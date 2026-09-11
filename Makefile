@@ -21,3 +21,4 @@ notebook:
 notebook-check:
 	uv run --frozen --group notebook jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=120 --output-dir build --output executed-signal-report.ipynb notebooks/signal-report.ipynb
 	uv run --frozen --group notebook jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=120 --output-dir build --output executed-composition.ipynb notebooks/composition-cookbook.ipynb
+	uv run --frozen --group notebook jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=120 --output-dir build --output executed-quantiles.ipynb notebooks/quantile-diagnostics.ipynb

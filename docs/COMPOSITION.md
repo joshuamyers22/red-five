@@ -1,7 +1,8 @@
 # Notebook composition
 
 Run `make notebook` to open `notebooks/composition-cookbook.ipynb`. The original
-full-report notebook remains available; `make notebook-check` executes both.
+full-report notebook remains available; `make notebook-check` executes all three,
+including the [quantile notebook](../notebooks/quantile-diagnostics.ipynb).
 
 ## Independent sections
 
@@ -13,6 +14,8 @@ file write or unrelated calculation. Supported names:
 - `coverage`: counts only; no correlations or weights.
 - `economics`: supplied-weight interval accounting; weights are mandatory and
   checked against the signal panel. No standalone correlations are calculated.
+- `quantiles`: fixed training-reference bins, counts/means/spreads/monotonicity;
+  requires `quantiles=QuantileConfig(...)`, never weights. See [quantile policy](QUANTILES.md).
 
 All use existing production numerical functions. Input contracts, label maturity
 and availability checks still apply. Unsupported sections and invalid inputs raise
@@ -21,7 +24,8 @@ Valid sections record `computed` or `unavailable`, `scope: partial`, `verdict: n
 and the names of unrequested sections. A computed section is not full eligibility.
 
 `view.section(name)` extracts the same API from an existing `ReportView` with no
-reevaluation. Values match independent evaluation on identical inputs; IDs may
+reevaluation for sections actually present (v1 full reports have no quantiles).
+Values match independent evaluation on identical inputs; IDs may
 differ because extracted sections retain full-report lineage. Independent section
 IDs bind exact values and input, configuration, plan, lock, code and software
 identity. Reuse a result object across notebook cells; styling never reevaluates it.
@@ -54,7 +58,8 @@ unavailable rows are retained unless excluded by the explicit selection.
 them. Subplot grids and arbitrary notebook layout remain yours. It never calls
 `show()`, closes figures, changes unrelated axes or changes source values. Occupied
 axes require `overlay=True` and matching plot kind, group identities/order, target,
-horizon, calendar and scales; unsupported overlays fail. Use `label_prefix` to
+horizon, calendar and scales; quantile overlays also require identical bin bounds.
+Unsupported overlays fail. Use `label_prefix` to
 identify overlay series. Manual changes after plotting are exploratory: the library
 cannot guarantee semantic compatibility after arbitrary caller edits.
 

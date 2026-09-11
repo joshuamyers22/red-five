@@ -191,6 +191,8 @@ class Panel:
         return {
             "economics"
             if self.section.name == "economics"
+            else "quantiles"
+            if self.section.name == "quantiles"
             else "signals": self.selected_data()
         }
 
@@ -290,12 +292,14 @@ class Panel:
             "standalone": "correlations",
             "coverage": "coverage",
             "economics": "returns",
+            "quantiles": "quantiles",
         }[self.section.name]
         result = kind or default
         allowed = {
             "standalone": ("correlations", "coverage"),
             "coverage": ("coverage",),
             "economics": ("returns", "costs"),
+            "quantiles": ("quantiles", "quantile_counts"),
         }[self.section.name]
         if result not in allowed:
             raise ContractError("plot is not available for this section")

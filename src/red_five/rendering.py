@@ -34,6 +34,18 @@ SCHEMA = "red-five-render/v1"
 MAX_BUNDLE_BYTES = 32 * 1024 * 1024
 MAX_SECONDS = 60
 KINDS = ("correlations", "coverage", "returns", "costs")
+PLOT_FIELDS = {
+    "correlations": ("pearson_ic", "rank_ic"),
+    "coverage": ("eligible_observations", "immature_labels", "missing_mature_labels"),
+    "returns": ("gross_return", "net_return"),
+    "costs": ("trading_cost_return", "holding_cost_return"),
+    "quantiles": ("mean_return",),
+    "quantile_counts": (
+        "eligible_observations",
+        "immature_labels",
+        "missing_mature_labels",
+    ),
+}
 STYLE: dict[RcKeyType, object] = {
     "font.family": "DejaVu Sans",
     "font.size": 9,
@@ -50,6 +62,8 @@ AXIS_CONTEXT: WeakKeyDictionary[Axes, tuple[object, ...]] = WeakKeyDictionary()
 
 
 def table_for(kind: str) -> str:
+    if kind in ("quantiles", "quantile_counts"):
+        return "quantiles"
     if kind not in KINDS:
         raise ContractError(
             "unknown figure; use correlations, coverage, returns or costs"
@@ -73,22 +87,15 @@ def make_figure(
     if type(page) is not int or not 0 <= page < pages:
         raise ContractError("figure page outside available range")
     rows = table.rows[page * PAGE_SIZE : (page + 1) * PAGE_SIZE]
-    allowed = {
-        "correlations": ("pearson_ic", "rank_ic"),
-        "coverage": (
-            "eligible_observations",
-            "immature_labels",
-            "missing_mature_labels",
-        ),
-        "returns": ("gross_return", "net_return"),
-        "costs": ("trading_cost_return", "holding_cost_return"),
-    }[kind]
+    allowed = PLOT_FIELDS[kind]
     fields = options.metrics or allowed
     if any(field not in allowed or field not in table.columns for field in fields):
         raise ContractError("metric not available for this plot")
     identity_count = (
         2 if table_name == "economics" or view.config.mode == "cross_sectional" else 3
     )
+    if table_name == "quantiles":
+        identity_count += 1  # Bin identity must stay attached to its model/date.
     context = (
         kind,
         view.config.mode,
@@ -96,6 +103,9 @@ def make_figure(
         view.config.horizon,
         view.config.calendar,
         tuple(row[:identity_count] for row in rows),
+        tuple(row[identity_count : identity_count + 2] for row in rows)
+        if table_name == "quantiles"
+        else None,
         options.yscale,
         options.ylim,
     )
@@ -164,6 +174,13 @@ def make_figure(
                     hatch=("", "//", "..")[j],
                 )
         labels = [" / ".join(str(v) for v in row[:identity_count]) for row in rows]
+        if table_name == "quantiles":
+            # Keep bin identity visible even when the model/contract text is long.
+            labels = [
+                " / ".join(str(v) for v in row[: identity_count - 1])[:34]
+                + f" / bin {row[identity_count - 1]}"
+                for row in rows
+            ]
         ax.set_xticks(
             list(range(len(rows))),
             [label if len(label) <= 45 else label[:42] + "…" for label in labels],
@@ -180,10 +197,16 @@ def make_figure(
         else:
             ax.set_ylabel(
                 "Observations"
-                if kind == "coverage"
+                if kind in ("coverage", "quantile_counts")
+                else "Mean forward return (fraction); descriptive signal target"
+                if kind == "quantiles"
                 else "Fraction of pre-trade NAV; supplied total-return intervals"
             )
         ax.set_yscale(options.yscale)
+        if kind == "quantiles":
+            for i, row in enumerate(rows):
+                if row[table.columns.index("mean_return")] is None:
+                    ax.text(i, 0, "unavailable", rotation=90, fontsize=7)
         if options.ylim is not None:
             ax.set_ylim(options.ylim)
         if options.ylim is not None or options.yscale != "linear":
@@ -235,7 +258,8 @@ def html_report(view: ReportView, svgs: dict[str, bytes] | None = None) -> str:
         "</style><h1>Red Five — descriptive signal report</h1>",
         f"<p>{escape(view.caption)}</p>",
         "<p>No acceptance verdict. Quantiles, breadth, uncertainty, marginal value, "
-        "NAV and drawdown are unavailable in this slice. Tables preserve full values; "
+        "NAV and drawdown are unavailable in this full-report schema. "
+        "Tables preserve full values; "
         "plots convert accounting decimals to floating point for display only.</p>",
     ]
     for name, table in view.tables.items():

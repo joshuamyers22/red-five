@@ -5,10 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 from .contracts import ContractError, EvaluationConfig
 from .economics import account_weights
+from .quantiles import QUANTILE_FIELDS, QuantileConfig, evaluate_quantiles
 from .reporting import canonical, software_versions, source_identity, verify_report
 from .signal_io import MAX_BYTES, digest, json_object, parse_predictions, parse_weights
 from .standalone import evaluate_groups
@@ -17,8 +18,9 @@ from .visualization import Cell, ReportView, Table, mapping, number, sequence, t
 if TYPE_CHECKING:
     from .composition import Panel, Selection
 
-SectionName = Literal["standalone", "coverage", "economics"]
+SectionName = Literal["standalone", "coverage", "economics", "quantiles"]
 SCHEMA = "red-five-section/v1"
+QUANTILE_SCHEMA = "red-five-section/v2"
 COUNTS = (
     "observations",
     "eligible_observations",
@@ -70,13 +72,16 @@ class SectionResult:
             raise ContractError("section exceeds 16 MiB")
         value = json_object(content)
         section_id = value.pop("section_id", None)
-        if value.get("schema_version") != SCHEMA or section_id != digest(
-            canonical(value)
-        ):
+        if value.get("schema_version") not in (
+            SCHEMA,
+            QUANTILE_SCHEMA,
+        ) or section_id != digest(canonical(value)):
             raise ContractError("section schema or digest mismatch")
         name = value.get("name")
-        if name not in ("standalone", "coverage", "economics"):
+        if name not in ("standalone", "coverage", "economics", "quantiles"):
             raise ContractError("section is not implemented")
+        if (name == "quantiles") != (value["schema_version"] == QUANTILE_SCHEMA):
+            raise ContractError("quantile sections require schema v2")
         config = EvaluationConfig.parse(
             mapping(mapping(value.get("identity")).get("config"))
         )
@@ -85,6 +90,8 @@ class SectionResult:
         expected = (
             ECONOMICS
             if name == "economics"
+            else (*group_columns(config), *QUANTILE_FIELDS)
+            if name == "quantiles"
             else (
                 *group_columns(config),
                 *COUNTS,
@@ -100,11 +107,22 @@ class SectionResult:
             raise ContractError("section row width mismatch")
         for row in rows:
             for key, entry in zip(columns, row, strict=True):
-                if key in (*COUNTS, "constituents"):
+                if key in (
+                    *COUNTS,
+                    "constituents",
+                    "bin",
+                    "requested_bins",
+                    "effective_bins",
+                    "training_observations",
+                    "out_of_range",
+                ):
                     number(entry, count=True)
                 elif key in ("pearson_ic", "rank_ic"):
                     if entry is not None and abs(number(entry)) > 1:
                         raise ContractError("invalid section correlation")
+                elif key in ("mean_return", "spread"):
+                    if entry is not None:
+                        number(entry)
                 elif key in ECONOMICS[5:]:
                     try:
                         amount = Decimal(text_cell(entry))
@@ -114,8 +132,38 @@ class SectionResult:
                         raise ContractError(
                             "invalid section accounting amount"
                         ) from error
-                elif key != "reason" or entry is not None:
+                elif (
+                    key
+                    not in (
+                        "reason",
+                        "spread_reason",
+                        "monotonicity",
+                        "monotonicity_reason",
+                    )
+                    or entry is not None
+                ):
                     text_cell(entry)
+        if name == "quantiles":
+            details = mapping(value.get("diagnostics"))
+            policy = mapping(details.get("policy"))
+            if set(policy) != {
+                "training_end",
+                "bins",
+                "minimum_training",
+                "minimum_bin",
+            }:
+                raise ContractError("quantile policy missing from evidence")
+            if any(
+                type(policy[k]) is not int
+                for k in ("bins", "minimum_training", "minimum_bin")
+            ):
+                raise ContractError("invalid quantile policy types")
+            QuantileConfig(
+                text_cell(policy["training_end"]),
+                cast(int, policy["bins"]),
+                cast(int, policy["minimum_training"]),
+                cast(int, policy["minimum_bin"]),
+            )
         if (
             value.get("status") not in ("computed", "unavailable")
             or value.get("verdict") is not None
@@ -140,6 +188,11 @@ class SectionResult:
     def _repr_html_(self) -> str:
         return self.select().html()
 
+    @property
+    def diagnostics(self) -> dict[str, object]:
+        """A fresh copy of fit metadata; editing it cannot mutate section evidence."""
+        return mapping(json_object(self.content).get("diagnostics", {}))
+
 
 def _seal(
     name: SectionName,
@@ -147,19 +200,22 @@ def _seal(
     data: Table,
     identity: dict[str, object],
     status: str = "computed",
+    diagnostics: dict[str, object] | None = None,
 ) -> SectionResult:
     value: dict[str, object] = {
-        "schema_version": SCHEMA,
+        "schema_version": QUANTILE_SCHEMA if name == "quantiles" else SCHEMA,
         "name": name,
         "scope": "partial",
         "status": status,
         "verdict": None,
         "not_requested": [
-            n for n in ("standalone", "coverage", "economics") if n != name
+            n for n in ("standalone", "coverage", "economics", "quantiles") if n != name
         ],
         "identity": {**identity, "config": config},
         "table": {"columns": data.columns, "rows": data.rows},
     }
+    if diagnostics is not None:
+        value["diagnostics"] = diagnostics
     return SectionResult(canonical({**value, "section_id": digest(canonical(value))}))
 
 
@@ -171,12 +227,15 @@ def evaluate_section(
     lock_bytes: bytes,
     *,
     weight_bytes: bytes | None = None,
+    quantiles: QuantileConfig | None = None,
 ) -> SectionResult:
     """Compute one section in memory; new numerical samples require new inputs."""
-    if name not in ("standalone", "coverage", "economics"):
+    if name not in ("standalone", "coverage", "economics", "quantiles"):
         raise ContractError("section is not implemented")
+    if (name == "quantiles") != (quantiles is not None):
+        raise ContractError("supply quantile options exactly when requesting quantiles")
     if name != "economics" and weight_bytes is not None:
-        raise ContractError("weights are not an input to standalone/coverage sections")
+        raise ContractError("weights are not an input to non-economics sections")
     for content in (signal_bytes, config_bytes, plan_bytes, lock_bytes, weight_bytes):
         if content is not None and (not content.strip() or len(content) > MAX_BYTES):
             raise ContractError("section inputs must be nonempty and at most 16 MiB")
@@ -184,7 +243,15 @@ def evaluate_section(
     config = EvaluationConfig.parse(declaration)
     predictions = parse_predictions(signal_bytes, config)
     status = "computed"
-    if name == "economics":
+    diagnostics: dict[str, object] | None = None
+    if name == "quantiles":
+        assert quantiles is not None
+        table, diagnostics = evaluate_quantiles(predictions, config, quantiles)
+        if not table.rows or all(
+            row[table.columns.index("status")] == "unavailable" for row in table.rows
+        ):
+            status = "unavailable"
+    elif name == "economics":
         if weight_bytes is None:
             raise ContractError("economics requires supplied weights")
         weights = parse_weights(weight_bytes, config)
@@ -252,11 +319,16 @@ def evaluate_section(
             "software": software_versions(),
         },
         status,
+        diagnostics,
     )
 
 
 def section_from_report(view: ReportView, name: SectionName) -> SectionResult:
     """Extract values without reevaluation; preserve the original report lineage."""
+    if name == "quantiles":
+        raise ContractError(
+            "full report v1 has no quantile evidence; use evaluate_section"
+        )
     if name not in ("standalone", "coverage", "economics"):
         raise ContractError("section is not implemented")
     table = view.tables["economics" if name == "economics" else "signals"]

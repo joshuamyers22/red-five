@@ -66,7 +66,7 @@ def test_notebook_html_and_safe_exports() -> None:
     html = item.html()
     assert "<script>" not in html
     assert "&lt;script&gt;" in html and "<svg" in html
-    assert "unavailable in this slice" in html
+    assert "unavailable in this full-report schema" in html
     assert "=CMD()" in item.tables["signals"].csv().decode()
     table = Table(
         ("text", "number"),
@@ -289,7 +289,10 @@ def test_svg_and_png_repeatable() -> None:
         )
 
 
-@pytest.mark.parametrize("name", ["signal-report.ipynb", "composition-cookbook.ipynb"])
+@pytest.mark.parametrize(
+    "name",
+    ["signal-report.ipynb", "composition-cookbook.ipynb", "quantile-diagnostics.ipynb"],
+)
 def test_tracked_notebook_has_no_saved_outputs(name: str) -> None:
     notebook = json_object((ROOT / "notebooks" / name).read_bytes())
     for item in sequence(notebook["cells"]):

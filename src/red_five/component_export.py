@@ -12,7 +12,13 @@ from time import monotonic
 
 from .composition import Panel, PlotOptions, Selection
 from .contracts import ContractError
-from .rendering import MAX_BUNDLE_BYTES, MAX_SECONDS, figure_bytes, publish_bundle
+from .rendering import (
+    MAX_BUNDLE_BYTES,
+    MAX_SECONDS,
+    PLOT_FIELDS,
+    figure_bytes,
+    publish_bundle,
+)
 from .reporting import canonical, source_identity
 from .sections import SectionResult
 from .signal_io import MAX_BYTES, digest, json_object, read_bytes
@@ -54,16 +60,7 @@ def export_components(components: Sequence[Component], output_dir: str | Path) -
         files[prefix + ".csv"] = panel.table_data().csv()
         html.append(panel.html())
         if component.kind is not None:
-            plotted = component.options.metrics or {
-                "correlations": ("pearson_ic", "rank_ic"),
-                "coverage": (
-                    "eligible_observations",
-                    "immature_labels",
-                    "missing_mature_labels",
-                ),
-                "returns": ("gross_return", "net_return"),
-                "costs": ("trading_cost_return", "holding_cost_return"),
-            }.get(component.kind, ())
+            plotted = component.options.metrics or PLOT_FIELDS.get(component.kind, ())
             if any(metric not in panel.table_data().columns for metric in plotted):
                 raise ContractError(
                     "chart export table must include its plotted metrics"
@@ -137,7 +134,7 @@ def verify_components(output: Path) -> dict[str, object]:
             raise ContractError("invalid component source filename")
         required.update((source, prefix + ".csv"))
         if record.get("kind") is not None:
-            if record["kind"] not in ("correlations", "coverage", "returns", "costs"):
+            if text_cell(record["kind"]) not in PLOT_FIELDS:
                 raise ContractError("invalid component kind")
             required.update((prefix + ".svg", prefix + ".png"))
     if set(files) != required or {p.name for p in output.iterdir()} != {
@@ -178,11 +175,17 @@ def verify_components(output: Path) -> dict[str, object]:
                 "standalone": ("correlations", "coverage"),
                 "coverage": ("coverage",),
                 "economics": ("returns", "costs"),
+                "quantiles": ("quantiles", "quantile_counts"),
             }[section.name]
             if kind not in allowed or any(
-                metric not in section.data.columns for metric in options.metrics
+                metric not in PLOT_FIELDS[kind] for metric in options.metrics
             ):
                 raise ContractError("partial plot incompatible with section")
+            if any(
+                metric not in panel.table_data().columns
+                for metric in (options.metrics or PLOT_FIELDS[kind])
+            ):
+                raise ContractError("partial plot metrics missing from companion table")
         page = record.get("page")
         if (
             type(page) is not int

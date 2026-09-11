@@ -28,8 +28,10 @@ Run `make notebook` from the project directory to open
 [the composition cookbook](notebooks/composition-cookbook.ipynb) in the locked local JupyterLab
 environment. Compute individual sections, select models, customize charts/tables,
 draw on your own subplot axes, and export only chosen components. No separate
-kernel installation is needed. `make notebook-check` executes both the cookbook
-and the original [full-report notebook](notebooks/signal-report.ipynb).
+kernel installation is needed. The [quantile notebook](notebooks/quantile-diagnostics.ipynb)
+adds frozen training-only bins, separate model charts, coverage and spread tables;
+see [its API and assumptions](docs/QUANTILES.md). `make notebook-check` executes all
+three notebooks, including the original [full-report notebook](notebooks/signal-report.ipynb).
 
 See [the composition API](docs/COMPOSITION.md) for `evaluate_section`, `Selection`,
 `PlotOptions`, caller-owned axes, and partial exports. Existing full-report usage:
@@ -79,6 +81,7 @@ The [project brief](PROJECT_BRIEF.md), [plan](docs/PROJECT_PLAN.md),
 [analysis plan](STATISTICAL_ANALYSIS_PLAN.md), and
 [initial verification record](docs/INITIAL_VERIFICATION.md) define scope and
 remaining work. Next slices add time-aware inference/selection evidence,
-generalized quantiles, paired marginal comparisons and the Postgres registry.
+breadth, paired marginal comparisons and the Postgres registry. Descriptive
+fixed-training quantiles are available as an independent notebook section.
 Production monitoring, deployment, calibrated costs and market-data onboarding
 remain later gates. This repository has not been deployed.
