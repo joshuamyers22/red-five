@@ -22,7 +22,37 @@ uv run red-five eval examples/signals.csv \
 uv run red-five verify build/example-report.json
 ```
 
-All example inputs are synthetic. Output is JSON; the CLI prints its location,
+## Visualize in Jupyter
+
+Run `make notebook` from the project directory to open
+[the example notebook](notebooks/signal-report.ipynb) in the locked local JupyterLab
+environment. Run all cells to generate synthetic evidence, display charts and
+tables, and export an offline report. No separate kernel installation is needed
+when launching this way. `make notebook-check` executes it headlessly.
+
+```python
+from red_five.visualization import load_report
+
+view = load_report("build/example-report.json")
+display(view)  # Full inline report
+display(view.table("signals"))  # Polars dataframe
+display(view.figure("correlations"))
+view.export("build/example-bundle")
+```
+
+From the command line:
+
+```sh
+uv run red-five render build/example-report.json --output-dir build/example-bundle
+uv run red-five verify-bundle build/example-bundle
+```
+
+Bundles contain offline HTML, SVG/PNG figures, HTML/CSV tables, source JSON and a
+hash manifest. See [reporting contracts](docs/REPORTING.md) for supported views,
+limits and export safety, and [infrastructure](docs/INFRASTRUCTURE.md) for local
+setup and deployment gates. Rendering remains descriptive, with no verdict.
+
+All example inputs are synthetic. Evaluation output is JSON; the CLI prints its location,
 identity and evidence status. Rerunning identical inputs is idempotent. A different
 report cannot overwrite an existing output. `verify` checks the report's internal
 content digest; it is not a source authenticity or financial correctness check.

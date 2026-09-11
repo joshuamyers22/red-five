@@ -1,4 +1,4 @@
-.PHONY: setup format lint typecheck test check audit build
+.PHONY: setup format lint typecheck test check audit build notebook notebook-check
 setup:
 	uv sync --frozen --dev
 format:
@@ -16,3 +16,7 @@ audit:
 	uv run python tools/check_licenses.py
 build:
 	uv build
+notebook:
+	uv run --frozen --group notebook jupyter lab --ip=127.0.0.1 notebooks/signal-report.ipynb
+notebook-check:
+	uv run --frozen --group notebook jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=120 --output-dir build --output executed-signal-report.ipynb notebooks/signal-report.ipynb

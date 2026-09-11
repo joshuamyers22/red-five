@@ -163,7 +163,7 @@ The original draft attributed these corrections to source notes. This review che
 
 ---
 
-## 8. Output — the scorecard
+## 8. Output — scorecard, graphics and tables
 
 One versioned `SignalReport` object, one rendered page backed by immutable evidence. The numbers below are layout placeholders, not a reconciled calculation or measured result. Add data/label cutoff, baseline and run identity, validation split, confidence intervals, coverage, cost assumptions, and decision reason codes (§14.4). Structure:
 
@@ -179,7 +179,45 @@ Economics      breakeven IC 0.020 | net edge 1.4bp | net SR 0.44
 Fragility      IC in stress quintile −0.01 | post-decay SR 0.31
 ```
 
-Plots via the ggplot-style layer for consistency with the rest of the stack: IC time series with rolling mean, decay curve, quantile spread bars, marginal-Sharpe-vs-n, breakeven heatmap, capacity curve.
+Graphical and tabular output are first-class deliverables, not a final cosmetic step. Start with views supported by the existing descriptive JSON; add inference, quantiles, marginal comparisons and portfolio-path views only when their underlying evidence contracts exist. The figures in the layout above remain illustrative and must never appear as fallback values in an actual report.
+
+### 8.1 Report bundle and rendering boundary
+
+- **Offline HTML report:** one navigable page with run/status banner, summary scorecard, graphics, accessible data tables, assumptions and provenance. No server, CDN, remote fonts or network connection required; no live dashboard in this scope.
+- **Figure exports:** SVG for scalable review and PNG for sharing, with stable figure IDs, captions and corresponding table IDs. Use a consistent ggplot-style theme; select and lock the rendering library during implementation. Keep `binspect` interoperability behind the plotting adapter rather than in numerical domain code.
+- **Table exports:** semantic HTML tables plus UTF-8 CSV files with a documented schema (column types, null encoding, units and precision). Include full-precision values in machine-readable evidence; rounding is display-only. Preserve instrument/contract identifiers as text and provide spreadsheet-safe handling for untrusted text fields without changing canonical values.
+- **Canonical evidence:** plots and tables consume verified, versioned report JSON and any manifest-referenced, hash-verified tabular evidence. They cannot refit models, select weights, infer missing results, change verdicts or compute new statistical/economic metrics. New rolling series, confidence intervals, bin summaries, drawdowns and scenarios must first be produced and tested by the evaluation layer. Render-only ordering, faceting and formatting are permitted.
+- **CLI and notebook API:** `red-five render report.json --output-dir report-bundle` produces HTML, figures, tables and a manifest without rerunning evaluation. `load_report(path)` supplies the same views in Jupyter; `make notebook` opens the synthetic example. These descriptive interfaces are implemented; advanced views remain phased below. The manifest records source report hash, renderer/source/config versions and output hashes. Preserve non-overwriting publication and require manifest verification before consuming a bundle; rendering failure leaves source evidence unchanged.
+- **Distribution boundary:** the public GitHub repository contains synthetic examples only. Real report bundles remain ignored/private by default and require an explicit data-release decision before publication; rendering must not upload anything.
+
+### 8.2 Required views and evidence dependencies
+
+| Review question / phase | Graphical output | Companion table and eligibility |
+|---|---|---|
+| Is the run usable? First reporting slice | Eligible, missing-mature and immature observation counts by evaluation group; separate timeline/coverage map only once time-indexed coverage evidence exists | Run identity, as-of/label cutoff, mode, target, horizon, model identities, status/reasons and eligible/excluded counts. Always retain invalid/insufficient groups. |
+| How does each model behave? First reporting slice, then Phase 1 | Per-group Pearson/Spearman dot plots; later cross-sectional per-date IC with trailing rolling mean, or per-instrument/contract temporal diagnostics, explicitly labeled by axis | Group estimates, eligible count, exclusions and reason codes; uncertainty/method only when computed. Do not call temporal correlation a cross-sectional IC series. |
+| Is behavior stable across horizons and bins? Phase 1 | Horizon/lag decay curves and within-model quantile mean-return plots; interval bands only from the declared estimator | Horizon/target definition, training-only bin boundaries, ties, counts, coverage, means, spreads and uncertainty. Distinguish cumulative-horizon profiles from fitted incremental decay/half-life. |
+| What do supplied positions earn after costs? First reporting slice, then Phase 2 | Initially gross/net interval-return and cost-component bars; later gross/net NAV and drawdown curves after validated non-overlapping portfolio-path accounting | Supplied portfolio/interval, gross return, trading and holding costs, net return, turnover and units. NAV, Sharpe and drawdown are unavailable from the current interval-only report. |
+| What assumptions make it viable? Phase 2 | Cost/AUM sensitivity heatmaps and capacity curves with infeasible regions masked | Scenario assumptions, calibrated validity ranges, net utility, constraints and crossing status; no extrapolated crossing or rank-IC-to-P&L conversion. |
+| Does it improve the existing portfolio? Phase 3 | Paired baseline/augmented performance views and incremental utility estimates with valid intervals | Baseline snapshot, matched evaluation dates, supplied weighting policies, gross/net comparison, delta, coverage and uncertainty. Missing paired evidence is unavailable, not zero improvement. |
+| How redundant are the model streams? Phase 4 | Correlation/dependence heatmap with overlap counts; covariance spectrum and explicitly labeled breadth scenarios | Model/instrument/contract IDs, pairwise overlap, missingness policy, matrix validity, concentration and scenario assumptions. No assertion that one contract equals one independent bet. |
+| Why was a decision reached? Phase 5 | Summary annotations linking to supporting figures; no acceptance-colored badge before eligibility | Versioned decision predicates, inputs, thresholds, outcomes, reason codes, trial family/search history and evidence links. Unconfigured predicates remain unavailable. |
+
+### 8.3 Display and statistical integrity
+
+- Every figure/table identifies the run, evaluation sample, target/horizon, units and grouping. Put sample size, exclusions, uncertainty method/level and major assumptions beside the estimate, not only in a tooltip. Show `unavailable` plus a reason instead of substituting zeros or omitting failed models.
+- Time-series views facet by model/instrument/contract; a single model is supported. Do not pool unrelated score scales. Training-only bins stay fixed when future observations change. Cross-model aggregation, if desired, requires an explicit evaluation-layer policy and coverage disclosure.
+- Use trailing, never centered, rolling windows with declared lookback and minimum count. Visually distinguish observations, fitted estimates, uncertainty and hypothetical scenarios. Confidence bands must identify pointwise versus simultaneous coverage and must not imply multiplicity adjustment unless it was actually performed.
+- Expose time gaps and label immaturity; do not connect missing periods as if observations were continuous. Label return percentages versus bps, cost sign conventions and log axes; bars start at zero and correlation heatmaps use a fixed, labeled scale. Avoid decorative dual axes and three-dimensional charts.
+- Use colorblind-safe colors plus labels/line styles, sufficient contrast, meaningful captions and accessible HTML headings/tables. Every chart has a usable text/table equivalent. Dense panels use deterministic, declared pagination/faceting; any display downsampling is disclosed and does not alter metrics or the complete table export.
+- Escape all metadata in HTML/SVG, defend CSV exports against formula injection, reject unsafe output paths, and avoid raw signals/positions in default summary reports. Bound figure/table counts, output bytes and render time; publish explicit truncation/limit failures, not silent omission.
+
+### 8.4 Delivery and acceptance
+
+1. **Next slice: descriptive report bundle.** Render only current JSON fields: run/status summary, per-group correlations/counts and supplied-weight interval accounting. Include HTML tables, CSV and SVG/PNG exports. Unsupported views have explicit not-yet-available states; no new significance or portfolio-path claims.
+2. **Incremental analytical views.** Add each row of §8.2 as its Phase 1–4 evidence becomes available. Version extended schemas and maintain old-report compatibility or give a clear unsupported-version error. Reporting must not delay core offline evaluation or require a database.
+3. **Phase 5 integration.** Complete the scorecard and decision audit links. Test known-value JSON-to-table-to-chart-data parity, display rounding, negative/zero/constant values, ties, missing/immature/all-ineligible groups, one model, many models, long/non-ASCII identifiers, tampered evidence and hostile metadata/CSV strings.
+4. **Release evidence.** Run render/verify smoke checks from the installed wheel with networking disabled; inspect representative synthetic reports at desktop and narrow/print layouts. Exercise missing rendering dependencies, output conflicts and mid-render failure with no partially complete bundle. Require deterministic table/plot-data/manifest output under pinned settings; use structure/data assertions and toleranced image comparisons, not cross-platform pixel equality as a numerical oracle. Rendering must leave source report hashes, computed values and decision status unchanged.
 
 The verdict policy must be versioned and predeclared, with every predicate and supporting observation stored. Acceptance is a research recommendation; changing live registry membership or weights is a separate recorded action. An invalid, stale, failed, or underpowered run cannot inherit an earlier acceptance as a fresh result.
 
@@ -198,11 +236,12 @@ The verdict policy must be versioned and predeclared, with every predicate and s
 | Phase | Deliverable and exit evidence |
 |---|---|
 | 0 | Complete project brief and statistical analysis plan; generate `python-data-quant` foundation under `~/Projects/red-five` when implementation starts. Freeze PIT, target, portfolio, cost, and baseline contracts; CLI fixture → validation → one metric and trade ledger → persisted evidence → minimal report; `make check` and build pass. No acceptance verdict yet. |
-| 1 | Standalone metrics, temporal folds, dependence-aware inference, trial ledger, negative controls, decay and quantile diagnostics; leakage and missingness attacks pass. |
+| 0R | Next slice: offline descriptive HTML report, accessible tables/CSV and SVG/PNG figures from current verified JSON (§8.4); render/data parity and installed-wheel smoke pass. Unsupported analyses remain unavailable. No verdict yet. |
+| 1 | Standalone metrics, temporal folds, dependence-aware inference, trial ledger, negative controls, decay and quantile diagnostics with companion graphics/tables (§8.2); leakage and missingness attacks pass. |
 | 2 | Executable portfolio accounting, independently reconciled workbook convention, calibrated/stressed costs and feasible capacity sweep; deterministic cash-flow and trade-side tests pass. Economics remains early but now has a portfolio contract. |
 | 3 | Versioned Postgres registry and baseline snapshots; held-out baseline/augmented replay with incremental net utility and uncertainty; concurrency, retry, migration, and reproduction checks pass. |
 | 4 | Optional breadth sensitivity diagnostics and analytical combination tests; no verdict dependence on unvalidated breadth heuristics. |
-| 5 | Full scorecard, plots, versioned verdict policy and audit trail; every decision reconstructs from retained evidence; invalid/stale/insufficient paths tested. |
+| 5 | Integrated HTML scorecard, figure/table export bundle, versioned verdict policy and audit trail (§8); every decision reconstructs from retained evidence; parity, accessibility, escaping and invalid/stale/insufficient paths tested. |
 | 6 | Containerized Airflow job after batch replay parity; maturity-aware evaluation, bounded retries, freshness alerts, restore and rollback exercises, representative runtime/memory evidence. |
 | 7 | Optional Shapley/probe experiment only after simpler baseline comparison and predeclared research protocol; no production gate by default. |
 
@@ -453,7 +492,7 @@ Run supplied baseline and augmented portfolios on the same dates and inputs. Req
 - Separate `status` from `verdict`: `invalid-data`, `failed`, `stale`, and `insufficient-evidence` are not economic rejections. Only an eligible valid run can have a verdict.
 - A versioned policy declares primary utility, practical hurdle, uncertainty estimator/level, coverage/history requirements, selection treatment, cost/capacity stresses, and risk limits. An unset predicate cannot default to passing. `accept-small` requires an explicit feasible size cap and all evidence gates; it is not a workaround for inadequate evidence.
 - Store each predicate's input, threshold, result, reason code, and links to evidence. Report uncertainty, sample dates/counts, current label watermark, baseline identity, target type, execution and cost convention, trial history, and unsupported assumptions beside estimates.
-- JSON is the canonical report data; HTML/plots consume it and cannot recompute business rules. Escape user-controlled titles/metadata; missing renderer support must not alter numerical results.
+- JSON is the canonical report data; HTML/plots/tables consume it and verified referenced evidence and cannot recompute business rules. Apply §8's render manifest, parity, export, accessibility and privacy contracts. Escape user-controlled titles/metadata; missing renderer support must not alter numerical results.
 - Promotion/retirement of live registry membership is a separately authorized, versioned event with prior state and rollback reference. Monitoring can recommend action but cannot change weights as a side effect of evaluation.
 
 ### 14.5 Storage, evidence identity, and publication
@@ -502,6 +541,7 @@ Target outcome: one auditable, repeatable assessment whose financial verdict can
 |---:|---|---|---|---|---|---|
 | 1 | Brief + analysis plan + schema/portfolio/baseline contracts | F01, F03, F04, F08–F10 | Completed decisions, explicit timestamps/units, prespecified utility and folds | Research, quant, data | Phase 0 | Partial: development brief, analysis plan and external-input contracts; consequential policy/baseline pending |
 | 2 | CLI fixture → ledger/metric → immutable evidence/report | F13, F15 | Clean frozen install/build, causal/invalid-input fixtures, offline core | Engineering | Phase 0 | Local descriptive slice verified; see INITIAL_VERIFICATION.md; full production gate pending |
+| 2a | Offline graphics/table bundle shared with Jupyter | F10, F13–F15 | §8.4: HTML/CSV/SVG/PNG, value parity, safe metadata, unavailable states, manifest and installed-wheel/kernel smoke | Engineering, research reviewer | Phase 0R, expanded through Phase 5 | Local descriptive implementation; see REPORTING_VERIFICATION.md; production and advanced views remain open |
 | 3 | Temporal validation + trial ledger + uncertainty | F02, F03, F15 | Fold-leakage and null/dependence simulations; retained OOS observations | Quant | Phase 1 | Proposed; unimplemented |
 | 4 | Cost/portfolio reconciliation + feasible AUM stress | F04, F08, F12 | Hand-worked ledger, source workbook reconciliation, cost monotonicity and capacity boundaries | Quant, execution | Phase 2 | Proposed; unimplemented |
 | 5 | Baseline snapshots + paired marginal replay | F05, F06, F09 | Same-date constrained net utility, singularity cases, historical reconstruction | Quant, engineering | Phase 3 | Proposed; unimplemented |
@@ -519,6 +559,8 @@ Owners and calendar delivery dates remain unassigned; phase deadlines are depend
 | 2026-09-11 | Applied the local production project template to this plan; integrated 16 severity-ranked findings, corrected misleading formula/decision claims, revised phasing, and added explicit data, economics, evidence, storage, and operational contracts | Document/source inspection and analytical counterexamples only; implementation acceptance evidence remains outstanding |
 | 2026-09-11 | Incorporated owner decisions: external residualization and weights; time-series models per instrument/contract; generalized quantile/breadth contracts and external-output validation | Scope/document update; future implementation checks remain required |
 | 2026-09-11 | Linked signed-in Safari survey of 79 Systematic Long Short archive posts; identified four direct multiple-testing discussions and two explicit Bonferroni references | Targeted article-text scan and inspection of matching passages; multiple-testing policy remains open |
+| 2026-09-11 | Added first-class graphical/table report bundle, evidence-dependent view inventory, phased delivery and rendering acceptance criteria (§8, Phase 0R) | Plan amendment only; graphical and tabular renderer remains unimplemented |
+| 2026-09-11 | Implemented shared descriptive notebook/HTML/figure/table views; extended locked dependencies, CI and infrastructure guidance using the production template | Local evidence in REPORTING_VERIFICATION.md; no deployment or advanced analytical claims |
 
 ## Implementation status — 2026-09-11
 

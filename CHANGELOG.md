@@ -4,6 +4,11 @@ Notable changes are recorded here using semantic versioning.
 
 ## Unreleased
 
+- Added immutable notebook views, Polars tables, Matplotlib figures and verified
+  offline HTML/CSV/SVG/PNG bundles for descriptive evidence.
+- Added a runnable synthetic Jupyter notebook, locked notebook dependencies,
+  notebook/installed-wheel CI smoke checks and infrastructure guidance.
+
 - Started Red Five from the production template's `python-data-quant` archetype.
 - Added strict timestamped signal and external-weight contracts, separate
   instrument/contract diagnostics, and Decimal interval cost accounting.

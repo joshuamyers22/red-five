@@ -1,5 +1,16 @@
 # Notebooks
 
+Start with `signal-report.ipynb`: run `make notebook` from the repository root,
+then run all cells. It generates a synthetic report through production functions,
+displays the shared report view and exports a verified bundle under ignored
+`build/`. To inspect your own report, use `load_report(path)` instead of the
+synthetic-generation cell. `view.table()` returns a Polars frame;
+`view.figure(kind, page=0)` returns an independent Matplotlib Figure.
+
+Launch through `make notebook` so the kernel uses the project's locked environment.
+Do not expose Jupyter beyond loopback or disable its authentication. CI uses
+`make notebook-check`; the tracked notebook deliberately contains no cell outputs.
+
 Use notebooks for exploration and communication. Import production calculations
 from `src/`; do not maintain a second implementation in cells. Clear sensitive
 outputs and large data before committing. Promote stable behavior into typed

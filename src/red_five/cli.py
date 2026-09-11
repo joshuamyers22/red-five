@@ -36,10 +36,27 @@ def main(argv: list[str] | None = None) -> int:
         "verify", help="verify report content and identity hashes"
     )
     verify.add_argument("input", type=Path)
+    render = commands.add_parser("render", help="export offline charts and tables")
+    render.add_argument("input", type=Path)
+    render.add_argument("--output-dir", required=True, type=Path)
+    bundle = commands.add_parser("verify-bundle", help="verify rendered bundle hashes")
+    bundle.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     code = source_identity()
     try:
-        if args.command == "verify":
+        output: str | None = None
+        if args.command == "render":
+            from .visualization import load_report
+
+            view = load_report(args.input)
+            output = str(view.export(args.output_dir))
+            report = {"run_id": view.run_id, "status": view.status}
+        elif args.command == "verify-bundle":
+            from .rendering import verify_bundle
+
+            manifest = verify_bundle(args.input)
+            report = {"run_id": manifest["run_id"], "status": "verified"}
+        elif args.command == "verify":
             report = verify_report(read_bytes(args.input))
         else:
             report = evaluate(
@@ -52,12 +69,13 @@ def main(argv: list[str] | None = None) -> int:
                 weight_bytes=None if args.weights is None else read_bytes(args.weights),
             )
             publish(args.output, seal_report(report))
+            output = str(args.output)
         print(
             json.dumps(
                 {
                     "run_id": report["run_id"],
                     "status": report["status"],
-                    "output": None if args.command == "verify" else str(args.output),
+                    "output": output,
                 }
             )
         )

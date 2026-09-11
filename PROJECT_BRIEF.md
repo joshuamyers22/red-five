@@ -29,3 +29,11 @@ Descriptive Pearson/Spearman correlations and per-interval supplied-portfolio ac
 Highest-risk cases: future information, mixed instrument histories, stale/missing labels, omitted/repeated trade costs, and evidence overwritten under the same name. Focused tests must exercise those boundaries in addition to inherited template tests.
 
 Runtime/memory targets for production panels, approved licensed data, calibrated cost model, final holdout/multiplicity policy, acceptance thresholds, registry retention/recovery and hosting/on-call remain open. They do not block this synthetic local slice. Before deployment, complete release, container, restore, freshness and production replay evidence.
+
+## Notebook and reporting slice
+
+Shared immutable report views serve Jupyter, CLI and offline HTML/CSV/SVG/PNG.
+Matplotlib is a presentation adapter; the locked optional notebook group provides
+JupyterLab and ipykernel. No computations move into notebook cells. Local setup,
+CI notebook/package smoke tests and deployment gates follow the production
+template; see `docs/REPORTING.md`, `docs/INFRASTRUCTURE.md` and ADR 0002.

@@ -31,6 +31,8 @@ Git history provides the audit trail.
 | `initial-evidence` | Local quality/build/audit and installed wheel passed; remote CI and production approval remain outstanding. | `docs/INITIAL_VERIFICATION.md` | 2026-09-11 |
 | `template-utilities` | Inherited regression/dataset utilities are separate from signal evaluation. | `docs/TEMPLATE_GUIDE.md`, `tests/test_template_cli_smoke.py` | 2026-09-11 |
 | `identity-limit` | Installed wheels use a source digest; lock hashing does not attest the whole installed environment. | `REPRODUCIBILITY.md`, `src/red_five/reporting.py` | 2026-09-11 |
+| `notebook-views` | `make notebook` uses the locked notebook group; immutable views serve notebook and exports without recomputing metrics. | `notebooks/signal-report.ipynb`, `docs/adr/0002-notebook-reporting.md` | 2026-09-11 |
+| `render-boundary` | Rendering is serial, limited to 200 groups/intervals and requires manifest verification; real bundles stay private. | `docs/REPORTING.md`, `tests/test_visualization.py` | 2026-09-11 |
 
 ## Verified traps and failed approaches
 
@@ -45,4 +47,5 @@ Git history provides the audit trail.
 |---|---|---|---|
 | `decision-policy` | Select hypothesis family, dependence-aware inference, holdout and thresholds before any verdict. | Josh / research | Before inference slice |
 | `next-slices` | Generalized training-only quantiles, breadth, paired marginal replay and registry evidence follow the canonical plan. | Unassigned | Next phase planning |
+| `reporting-followup` | Validate representative panel size, narrow/print accessibility and production artifact recovery before expanding local rendering limits. | Engineering / research; `docs/REPORTING.md` | Before production reporting |
 | `production-gates` | Data licensing, calibrated costs, workload budget, recovery and monitoring ownership remain open. | Unassigned | Before deployment |

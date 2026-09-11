@@ -27,3 +27,11 @@ jobs:
           cd "$RUNNER_TEMP"
           "$project_dir/build/wheel-smoke/bin/red-five" eval "$project_dir/examples/signals.csv" --config "$project_dir/examples/evaluation.json" --analysis-plan "$project_dir/STATISTICAL_ANALYSIS_PLAN.md" --lock "$project_dir/uv.lock" --weights "$project_dir/examples/weights.csv" --output "$project_dir/build/wheel-report.json"
           "$project_dir/build/wheel-smoke/bin/red-five" verify "$project_dir/build/wheel-report.json"
+          "$project_dir/build/wheel-smoke/bin/red-five" render "$project_dir/build/wheel-report.json" --output-dir "$project_dir/build/wheel-bundle"
+          "$project_dir/build/wheel-smoke/bin/red-five" verify-bundle "$project_dir/build/wheel-bundle"
+      - name: Execute synthetic notebook
+        run: make notebook-check
+      - name: Audit notebook environment
+        run: |
+          uv audit --preview-features audit-command --locked --only-group notebook
+          uv run --frozen --group notebook python tools/check_licenses.py
