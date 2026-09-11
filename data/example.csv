@@ -1,0 +1,3 @@
+timestamp,instrument,value,unit
+2026-01-02T14:30:00Z,ES,5000.10,points
+2026-01-02T14:30:01Z,ES,5000.25,points

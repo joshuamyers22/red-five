@@ -1,0 +1,13 @@
+{
+  "schema_version": "red-five-config/v1",
+  "study_id": "synthetic-walking-skeleton",
+  "mode": "time_series",
+  "as_of": "2026-01-12T00:00:00Z",
+  "signal_version": "synthetic-scores-v1",
+  "return_kind": "residual",
+  "return_model_id": "external-synthetic-residuals-v1",
+  "horizon": "1d",
+  "calendar": "synthetic-24h-utc",
+  "minimum_observations": 3,
+  "weighting_policy_id": "external-synthetic-weights-v1"
+}

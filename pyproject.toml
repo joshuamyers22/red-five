@@ -1,0 +1,41 @@
+[project]
+name = "red-five"
+version = "0.1.0"
+description = "Reproducible signal diagnostics and supplied-portfolio evaluation"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "LicenseRef-Proprietary"
+dependencies = [
+    "numpy>=2,<3",
+    "polars>=1.44.1,<2",
+    "statsmodels>=0.15,<0.16",
+]
+
+[project.scripts]
+"red-five" = "red_five.cli:main"
+"red-five-regression" = "red_five.analysis_cli:main"
+"red-five-validate" = "red_five.time_validation_cli:main"
+"red-five-dataset" = "red_five.dataset_cli:main"
+
+[build-system]
+requires = ["hatchling==1.32.0"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = ["pyright==1.1.411", "ruff==0.16.5", "pytest>=8,<10", "pytest-cov>=6,<8"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+include = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=red_five --cov-report=term-missing --cov-fail-under=85"

@@ -1,0 +1,29 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.12.5"
+      - run: uv sync --frozen --dev
+      - run: make check
+      - run: make audit build
+      - name: Installed wheel smoke
+        run: |
+          uv export --frozen --no-dev --no-emit-project --output-file build/runtime.requirements.txt
+          uv venv build/wheel-smoke
+          uv pip install --python build/wheel-smoke/bin/python --require-hashes -r build/runtime.requirements.txt
+          uv pip install --python build/wheel-smoke/bin/python --no-deps dist/red_five-*.whl
+          project_dir="$PWD"
+          cd "$RUNNER_TEMP"
+          "$project_dir/build/wheel-smoke/bin/red-five" eval "$project_dir/examples/signals.csv" --config "$project_dir/examples/evaluation.json" --analysis-plan "$project_dir/STATISTICAL_ANALYSIS_PLAN.md" --lock "$project_dir/uv.lock" --weights "$project_dir/examples/weights.csv" --output "$project_dir/build/wheel-report.json"
+          "$project_dir/build/wheel-smoke/bin/red-five" verify "$project_dir/build/wheel-report.json"
