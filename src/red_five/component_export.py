@@ -176,11 +176,18 @@ def verify_components(output: Path) -> dict[str, object]:
                 "coverage": ("coverage",),
                 "economics": ("returns", "costs"),
                 "quantiles": ("quantiles", "quantile_counts"),
+                "uncertainty": ("uncertainty",),
             }[section.name]
             if kind not in allowed or any(
                 metric not in PLOT_FIELDS[kind] for metric in options.metrics
             ):
                 raise ContractError("partial plot incompatible with section")
+            if (
+                kind == "uncertainty"
+                and options.metrics
+                and options.metrics != PLOT_FIELDS[kind]
+            ):
+                raise ContractError("uncertainty plot must retain estimate and bounds")
             if any(
                 metric not in panel.table_data().columns
                 for metric in (options.metrics or PLOT_FIELDS[kind])

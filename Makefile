@@ -23,3 +23,4 @@ notebook-check:
 	uv run --frozen --group notebook jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=120 --output-dir build --output executed-composition.ipynb notebooks/composition-cookbook.ipynb
 	uv run --frozen --group notebook jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=120 --output-dir build --output executed-quantiles.ipynb notebooks/quantile-diagnostics.ipynb
 	uv run --frozen --group notebook jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=120 --output-dir build --output executed-temporal-trials.ipynb notebooks/temporal-trials.ipynb
+	uv run --frozen --group notebook jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=120 --output-dir build --output executed-uncertainty.ipynb notebooks/uncertainty.ipynb

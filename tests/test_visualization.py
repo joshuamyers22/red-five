@@ -296,6 +296,7 @@ def test_svg_and_png_repeatable() -> None:
         "composition-cookbook.ipynb",
         "quantile-diagnostics.ipynb",
         "temporal-trials.ipynb",
+        "uncertainty.ipynb",
     ],
 )
 def test_tracked_notebook_has_no_saved_outputs(name: str) -> None:

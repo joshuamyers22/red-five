@@ -193,6 +193,8 @@ class Panel:
             if self.section.name == "economics"
             else "quantiles"
             if self.section.name == "quantiles"
+            else "uncertainty"
+            if self.section.name == "uncertainty"
             else "signals": self.selected_data()
         }
 
@@ -209,6 +211,19 @@ class Panel:
         selected = self.selected_data()
         details = self.section.diagnostics
         fold_caption = ""
+        uncertainty_caption = ""
+        if self.section.name == "uncertainty":
+            policy = mapping(details["policy"])
+            estimand = (
+                "temporal correlation"
+                if self.config.mode == "time_series"
+                else "equal-date mean cross-sectional IC"
+            )
+            uncertainty_caption = (
+                f"{estimand}; conditional {policy['confidence']} interval; "
+                f"{policy['metric']}; "
+                f"block {policy['block_length']}; not selection-adjusted; "
+            )
         if "fold" in details:
             fold = mapping(details["fold"])
             fold_caption = (
@@ -223,6 +238,7 @@ class Panel:
             f"{self.config.mode}; {self.config.return_kind} signal target; "
             f"{self.config.horizon}; as-of {self.config.as_of.isoformat()}; "
             f"{fold_caption}"
+            f"{uncertainty_caption}"
             f"section {self.run_id}"
         )
 
@@ -303,6 +319,7 @@ class Panel:
             "coverage": "coverage",
             "economics": "returns",
             "quantiles": "quantiles",
+            "uncertainty": "uncertainty",
         }[self.section.name]
         result = kind or default
         allowed = {
@@ -310,6 +327,7 @@ class Panel:
             "coverage": ("coverage",),
             "economics": ("returns", "costs"),
             "quantiles": ("quantiles", "quantile_counts"),
+            "uncertainty": ("uncertainty",),
         }[self.section.name]
         if result not in allowed:
             raise ContractError("plot is not available for this section")

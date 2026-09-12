@@ -1,7 +1,7 @@
 # Notebook composition
 
 Run `make notebook` to open `notebooks/composition-cookbook.ipynb`. The original
-full-report notebook remains available; `make notebook-check` executes all four,
+full-report notebook remains available; `make notebook-check` executes all five,
 including the [quantile notebook](../notebooks/quantile-diagnostics.ipynb) and
 [fold/trial notebook](../notebooks/temporal-trials.ipynb). Fold evaluators return the
 same section API with explicit window/provenance captions; see [fold contracts](TEMPORAL_TRIALS.md).
@@ -18,6 +18,8 @@ file write or unrelated calculation. Supported names:
   checked against the signal panel. No standalone correlations are calculated.
 - `quantiles`: fixed training-reference bins, counts/means/spreads/monotonicity;
   requires `quantiles=QuantileConfig(...)`, never weights. See [quantile policy](QUANTILES.md).
+- `uncertainty`: conditional block-bootstrap bounds/standard errors; requires
+  `uncertainty=BootstrapConfig(...)`, never weights. See [method and limitations](UNCERTAINTY.md).
 
 All use existing production numerical functions. Input contracts, label maturity
 and availability checks still apply. Unsupported sections and invalid inputs raise
@@ -60,7 +62,8 @@ unavailable rows are retained unless excluded by the explicit selection.
 them. Subplot grids and arbitrary notebook layout remain yours. It never calls
 `show()`, closes figures, changes unrelated axes or changes source values. Occupied
 axes require `overlay=True` and matching plot kind, group identities/order, target,
-horizon, calendar and scales; quantile overlays also require identical bin bounds.
+horizon, calendar and scales; quantile overlays also require identical bin bounds,
+and uncertainty overlays require matching metrics/estimands.
 Unsupported overlays fail. Use `label_prefix` to
 identify overlay series. Manual changes after plotting are exploratory: the library
 cannot guarantee semantic compatibility after arbitrary caller edits.

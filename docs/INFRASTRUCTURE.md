@@ -13,7 +13,7 @@ secret scanning and release-readiness checklist. See `Makefile` and
 - `make notebook` installs the locked optional notebook group and starts JupyterLab
   on loopback with its normal token authentication. Do not disable authentication,
   bind to a public interface or commit the token URL. Stop it with Ctrl-C.
-- `make notebook-check` executes all four synthetic notebooks into ignored `build/`.
+- `make notebook-check` executes all five synthetic notebooks into ignored `build/`.
 - `make audit build` checks runtime dependencies/licenses and builds packages.
   CI separately audits the notebook dependency group after its execution check.
 

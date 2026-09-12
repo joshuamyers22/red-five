@@ -14,6 +14,7 @@ from .reporting import canonical, software_versions, source_identity
 from .sections import SectionResult
 from .signal_io import MAX_BYTES, digest, json_object
 from .temporal import FoldSection, FoldSpec, evaluate_fold_section
+from .uncertainty import BootstrapConfig
 from .visualization import Cell, Table, mapping, text_cell
 
 MAX_EVENTS = 1000
@@ -86,6 +87,11 @@ def _read(connection: sqlite3.Connection) -> list[dict[str, object]]:
                     or (
                         section.name == "quantiles"
                         and section.diagnostics.get("policy") != request["quantiles"]
+                    )
+                    or (
+                        section.name == "uncertainty"
+                        and section.diagnostics.get("policy")
+                        != request.get("uncertainty")
                     )
                 ):
                     raise ContractError(
@@ -215,6 +221,7 @@ class TrialLedger:
         *,
         fold: FoldSpec,
         quantiles: QuantileConfig | None = None,
+        uncertainty: BootstrapConfig | None = None,
     ) -> SectionResult:
         """Register before computation; completed, unavailable and failed are retained.
 
@@ -231,6 +238,7 @@ class TrialLedger:
                 "section_name": name,
                 "fold": asdict(fold),
                 "quantiles": None if quantiles is None else asdict(quantiles),
+                "uncertainty": None if uncertainty is None else asdict(uncertainty),
                 "signals_sha256": digest(signal_bytes),
                 "config_sha256": digest(config_bytes),
                 "analysis_plan_sha256": digest(plan_bytes),
@@ -250,6 +258,7 @@ class TrialLedger:
                 lock_bytes,
                 fold=fold,
                 quantiles=quantiles,
+                uncertainty=uncertainty,
             )
         except Exception as error:
             # Do not persist exception text: it may include private inputs or paths.

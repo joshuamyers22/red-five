@@ -1,6 +1,6 @@
 # Red Five — initial descriptive analysis plan
 
-Version: `red-five-descriptive/v3`. Status: development fixtures only.
+Version: `red-five-descriptive/v4`. Status: development fixtures only.
 Decision owner: Josh; no consequential model approval has been granted.
 
 ## Estimand and sample
@@ -26,8 +26,10 @@ with reason codes. Do not square rank correlation and call it R².
 Apply feature availability at the decision and label availability at the report
 cutoff. Do not use immature labels even if a later-vintage input contains them.
 Model identity must be consistent with the declared mode. Predictive/causal claims,
-standard errors, p-values, decay fits and aggregate significance are deferred
-to an analysis plan defining temporal folds, label overlap and multiple testing.
+p-values, decay fits and aggregate significance are deferred to an approved
+analysis plan defining temporal folds, label overlap and multiple testing.
+The explicitly requested conditional interval extension below is development
+inference, not a selected-model or final-assessment decision policy.
 
 ## Descriptive quantile extension
 
@@ -65,6 +67,28 @@ unknown, including searches outside the wrapper. Family IDs do not select or
 validate a multiplicity policy. Nonoverlapping decision windows do not imply
 independent labels; no combined significance or locked final assessment is added.
 See [the temporal/trial contract](docs/TEMPORAL_TRIALS.md).
+
+## Conditional uncertainty extension
+
+The independent `uncertainty` section requires a complete BootstrapConfig:
+metric, fixed block length, replicate count, seed, confidence, elapsed-time step
+and minimum time points. Moving noncircular blocks resample paired score/return
+observations per time-series contract, or the sequence of per-date ICs per
+cross-sectional model. Estimates are temporal correlation or equal-date mean IC,
+respectively; never interchange these estimands. Percentile bounds and replicate
+standard deviation are conditional on approximate stationarity/dependence and
+the declared block policy. Ranks are recomputed within each time-series resample.
+
+No compressed missing dates, invalid-replicate dropping, automatic block/metric
+selection, p-values or multiplicity correction. Incomplete/irregular grids,
+short histories/blocks and degenerate samples have explicit unavailable outcomes.
+Method, counts and assumptions accompany schema-v3 section tables/plots; changes
+to numerical policy are recorded as new trials. See [exact method and primary
+references](docs/UNCERTAINTY.md) and [prespecified simulation evidence](docs/UNCERTAINTY_VERIFICATION.md).
+
+Real-data final-assessment dates and authority remain undecided; local registration
+is not a protected holdout. Complete [FINAL_ASSESSMENT.md](docs/FINAL_ASSESSMENT.md)
+before implementing consequential assessment access and decision predicates.
 
 ## Supplied portfolio accounting
 

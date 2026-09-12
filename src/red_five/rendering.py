@@ -35,6 +35,7 @@ MAX_BUNDLE_BYTES = 32 * 1024 * 1024
 MAX_SECONDS = 60
 KINDS = ("correlations", "coverage", "returns", "costs")
 PLOT_FIELDS = {
+    "uncertainty": ("estimate", "lower", "upper"),
     "correlations": ("pearson_ic", "rank_ic"),
     "coverage": ("eligible_observations", "immature_labels", "missing_mature_labels"),
     "returns": ("gross_return", "net_return"),
@@ -62,6 +63,8 @@ AXIS_CONTEXT: WeakKeyDictionary[Axes, tuple[object, ...]] = WeakKeyDictionary()
 
 
 def table_for(kind: str) -> str:
+    if kind == "uncertainty":
+        return "uncertainty"
     if kind in ("quantiles", "quantile_counts"):
         return "quantiles"
     if kind not in KINDS:
@@ -89,6 +92,10 @@ def make_figure(
     rows = table.rows[page * PAGE_SIZE : (page + 1) * PAGE_SIZE]
     allowed = PLOT_FIELDS[kind]
     fields = options.metrics or allowed
+    if kind == "uncertainty" and fields != allowed:
+        raise ContractError(
+            "uncertainty plots require estimate, lower and upper together"
+        )
     if any(field not in allowed or field not in table.columns for field in fields):
         raise ContractError("metric not available for this plot")
     identity_count = (
@@ -96,6 +103,8 @@ def make_figure(
     )
     if table_name == "quantiles":
         identity_count += 1  # Bin identity must stay attached to its model/date.
+    if table_name == "uncertainty" and view.config.mode == "cross_sectional":
+        identity_count = 1
     context = (
         kind,
         view.config.mode,
@@ -104,7 +113,7 @@ def make_figure(
         view.config.calendar,
         tuple(row[:identity_count] for row in rows),
         tuple(row[identity_count : identity_count + 2] for row in rows)
-        if table_name == "quantiles"
+        if table_name in ("quantiles", "uncertainty")
         else None,
         options.yscale,
         options.ylim,
@@ -148,15 +157,21 @@ def make_figure(
         colors = options.colors
         width = 0.8 / len(fields)
         for j, field in enumerate(fields):
+            if kind == "uncertainty" and j > 0:
+                continue
             index = table.columns.index(field)
             positions: list[float] = []
             values: list[float] = []
             for i, row in enumerate(rows):
                 value = row[index]
                 if value is not None:
-                    positions.append(i + (j - (len(fields) - 1) / 2) * width)
+                    positions.append(
+                        i
+                        if kind == "uncertainty"
+                        else i + (j - (len(fields) - 1) / 2) * width
+                    )
                     values.append(float(value))
-            if kind == "correlations":
+            if kind in ("correlations", "uncertainty"):
                 ax.scatter(
                     positions,
                     values,
@@ -164,6 +179,20 @@ def make_figure(
                     color=colors[j % len(colors)],
                     marker=options.markers[j % len(options.markers)],
                 )
+                if kind == "uncertainty":
+                    for i, row in enumerate(rows):
+                        lower, upper = (
+                            row[table.columns.index("lower")],
+                            row[table.columns.index("upper")],
+                        )
+                        if lower is not None and upper is not None:
+                            ax.vlines(
+                                i,
+                                float(lower),
+                                float(upper),
+                                color=colors[0],
+                                linewidth=2,
+                            )
             else:
                 ax.bar(
                     positions,
@@ -188,9 +217,13 @@ def make_figure(
             ha="right",
         )
         ax.axhline(0, color="#333333", linewidth=0.7)
-        if kind == "correlations":
+        if kind in ("correlations", "uncertainty"):
             ax.set_ylim(-1.05, 1.05)
-            ax.set_ylabel("Descriptive correlation (no significance claim)")
+            ax.set_ylabel(
+                "Correlation; conditional bootstrap interval"
+                if kind == "uncertainty"
+                else "Descriptive correlation (no significance claim)"
+            )
             for i, row in enumerate(rows):
                 if row[table.columns.index("status")] == "unavailable":
                     ax.text(i, -0.95, "unavailable", rotation=90, fontsize=7)

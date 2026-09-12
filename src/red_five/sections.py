@@ -13,14 +13,16 @@ from .quantiles import QUANTILE_FIELDS, QuantileConfig, evaluate_quantiles
 from .reporting import canonical, software_versions, source_identity, verify_report
 from .signal_io import MAX_BYTES, digest, json_object, parse_predictions, parse_weights
 from .standalone import evaluate_groups
+from .uncertainty import UNCERTAINTY_FIELDS, BootstrapConfig, evaluate_uncertainty
 from .visualization import Cell, ReportView, Table, mapping, number, sequence, text_cell
 
 if TYPE_CHECKING:
     from .composition import Panel, Selection
 
-SectionName = Literal["standalone", "coverage", "economics", "quantiles"]
+SectionName = Literal["standalone", "coverage", "economics", "quantiles", "uncertainty"]
 SCHEMA = "red-five-section/v1"
 QUANTILE_SCHEMA = "red-five-section/v2"
+UNCERTAINTY_SCHEMA = "red-five-section/v3"
 COUNTS = (
     "observations",
     "eligible_observations",
@@ -75,13 +77,22 @@ class SectionResult:
         if value.get("schema_version") not in (
             SCHEMA,
             QUANTILE_SCHEMA,
+            UNCERTAINTY_SCHEMA,
         ) or section_id != digest(canonical(value)):
             raise ContractError("section schema or digest mismatch")
         name = value.get("name")
-        if name not in ("standalone", "coverage", "economics", "quantiles"):
+        if name not in (
+            "standalone",
+            "coverage",
+            "economics",
+            "quantiles",
+            "uncertainty",
+        ):
             raise ContractError("section is not implemented")
         if (name == "quantiles") != (value["schema_version"] == QUANTILE_SCHEMA):
             raise ContractError("quantile sections require schema v2")
+        if (name == "uncertainty") != (value["schema_version"] == UNCERTAINTY_SCHEMA):
+            raise ContractError("uncertainty sections require schema v3")
         config = EvaluationConfig.parse(
             mapping(mapping(value.get("identity")).get("config"))
         )
@@ -90,6 +101,15 @@ class SectionResult:
         expected = (
             ECONOMICS
             if name == "economics"
+            else (
+                *(
+                    group_columns(config)
+                    if config.mode == "time_series"
+                    else ("model_id",)
+                ),
+                *UNCERTAINTY_FIELDS,
+            )
+            if name == "uncertainty"
             else (*group_columns(config), *QUANTILE_FIELDS)
             if name == "quantiles"
             else (
@@ -115,12 +135,17 @@ class SectionResult:
                     "effective_bins",
                     "training_observations",
                     "out_of_range",
+                    "time_points",
+                    "eligible_time_points",
+                    "block_length",
+                    "replicates",
+                    "valid_replicates",
                 ):
                     number(entry, count=True)
-                elif key in ("pearson_ic", "rank_ic"):
+                elif key in ("pearson_ic", "rank_ic", "estimate", "lower", "upper"):
                     if entry is not None and abs(number(entry)) > 1:
                         raise ContractError("invalid section correlation")
-                elif key in ("mean_return", "spread"):
+                elif key in ("mean_return", "spread", "standard_error"):
                     if entry is not None:
                         number(entry)
                 elif key in ECONOMICS[5:]:
@@ -143,6 +168,47 @@ class SectionResult:
                     or entry is not None
                 ):
                     text_cell(entry)
+        if name == "uncertainty":
+            bootstrap = BootstrapConfig.parse(
+                mapping(mapping(value.get("diagnostics")).get("policy"))
+            )
+            for row in rows:
+                lower = row[columns.index("lower")]
+                upper = row[columns.index("upper")]
+                se = row[columns.index("standard_error")]
+                available = row[columns.index("status")] == "available"
+                if (
+                    row[columns.index("metric")] != bootstrap.metric
+                    or row[columns.index("replicates")] != bootstrap.replicates
+                    or row[columns.index("block_length")] != bootstrap.block_length
+                    or (
+                        available
+                        and (
+                            lower is None
+                            or upper is None
+                            or se is None
+                            or row[columns.index("estimate")] is None
+                            or row[columns.index("reason")] is not None
+                        )
+                    )
+                    or (
+                        not available
+                        and (lower is not None or upper is not None or se is not None)
+                    )
+                ):
+                    raise ContractError(
+                        "uncertainty status or policy does not match table"
+                    )
+                if (
+                    (lower is None) != (upper is None)
+                    or (
+                        lower is not None
+                        and upper is not None
+                        and number(lower) > number(upper)
+                    )
+                    or (se is not None and number(se) < 0)
+                ):
+                    raise ContractError("invalid uncertainty bounds or standard error")
         if name == "quantiles":
             details = mapping(value.get("diagnostics"))
             policy = mapping(details.get("policy"))
@@ -203,13 +269,19 @@ def seal_section(
     diagnostics: dict[str, object] | None = None,
 ) -> SectionResult:
     value: dict[str, object] = {
-        "schema_version": QUANTILE_SCHEMA if name == "quantiles" else SCHEMA,
+        "schema_version": UNCERTAINTY_SCHEMA
+        if name == "uncertainty"
+        else QUANTILE_SCHEMA
+        if name == "quantiles"
+        else SCHEMA,
         "name": name,
         "scope": "partial",
         "status": status,
         "verdict": None,
         "not_requested": [
-            n for n in ("standalone", "coverage", "economics", "quantiles") if n != name
+            n
+            for n in ("standalone", "coverage", "economics", "quantiles", "uncertainty")
+            if n != name
         ],
         "identity": {**identity, "config": config},
         "table": {"columns": data.columns, "rows": data.rows},
@@ -228,12 +300,17 @@ def evaluate_section(
     *,
     weight_bytes: bytes | None = None,
     quantiles: QuantileConfig | None = None,
+    uncertainty: BootstrapConfig | None = None,
 ) -> SectionResult:
     """Compute one section in memory; new numerical samples require new inputs."""
-    if name not in ("standalone", "coverage", "economics", "quantiles"):
+    if name not in ("standalone", "coverage", "economics", "quantiles", "uncertainty"):
         raise ContractError("section is not implemented")
     if (name == "quantiles") != (quantiles is not None):
         raise ContractError("supply quantile options exactly when requesting quantiles")
+    if (name == "uncertainty") != (uncertainty is not None):
+        raise ContractError(
+            "supply bootstrap options exactly when requesting uncertainty"
+        )
     if name != "economics" and weight_bytes is not None:
         raise ContractError("weights are not an input to non-economics sections")
     for content in (signal_bytes, config_bytes, plan_bytes, lock_bytes, weight_bytes):
@@ -244,7 +321,13 @@ def evaluate_section(
     predictions = parse_predictions(signal_bytes, config)
     status = "computed"
     diagnostics: dict[str, object] | None = None
-    if name == "quantiles":
+    if uncertainty is not None:
+        table, diagnostics = evaluate_uncertainty(predictions, config, uncertainty)
+        if not table.rows or all(
+            r[table.columns.index("status")] == "unavailable" for r in table.rows
+        ):
+            status = "unavailable"
+    elif name == "quantiles":
         assert quantiles is not None
         table, diagnostics = evaluate_quantiles(predictions, config, quantiles)
         if not table.rows or all(
@@ -325,6 +408,10 @@ def evaluate_section(
 
 def section_from_report(view: ReportView, name: SectionName) -> SectionResult:
     """Extract values without reevaluation; preserve the original report lineage."""
+    if name == "uncertainty":
+        raise ContractError(
+            "full report v1 has no uncertainty evidence; use evaluate_section"
+        )
     if name == "quantiles":
         raise ContractError(
             "full report v1 has no quantile evidence; use evaluate_section"

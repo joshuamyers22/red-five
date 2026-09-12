@@ -12,6 +12,7 @@ from red_five.rendering import verify_bundle
 from red_five.sections import evaluate_section
 from red_five.temporal import FoldSpec, audit_folds
 from red_five.trials import TrialLedger
+from red_five.uncertainty import BootstrapConfig
 
 
 def main() -> None:
@@ -67,6 +68,26 @@ def main() -> None:
     )
     assert result.status == "computed"
     assert ledger.table().dataframe()["status"].to_list() == ["computed"]
+    uncertainty = ledger.run(
+        "wheel-uncertainty",
+        "synthetic",
+        "uncertainty",
+        (root / "examples/uncertainty-signals.csv").read_bytes(),
+        (root / "examples/uncertainty-evaluation.json").read_bytes(),
+        (root / "STATISTICAL_ANALYSIS_PLAN.md").read_bytes(),
+        (root / "uv.lock").read_bytes(),
+        fold=FoldSpec(
+            "uncertainty",
+            "2025-01-01T00:00:00Z",
+            "2025-03-01T00:00:00Z",
+            "2025-07-20T00:00:00Z",
+        ),
+        uncertainty=BootstrapConfig("pearson_ic", 8, 200, 123, 0.95, 86400, 64),
+    )
+    assert uncertainty.status == "computed"
+    uncertainty_output = args.output.with_name(args.output.name + "-uncertainty")
+    uncertainty.select().export(uncertainty_output, kind="uncertainty")
+    assert verify_bundle(uncertainty_output)["scope"] == "partial"
     print("Installed section API and partial bundle verified")
 
 

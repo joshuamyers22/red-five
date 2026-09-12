@@ -19,9 +19,10 @@ from .reporting import canonical, software_versions, source_identity
 from .sections import COUNTS, METRICS, SectionResult, cell, group_columns, seal_section
 from .signal_io import MAX_BYTES, digest, json_object, parse_predictions
 from .standalone import evaluate_groups
+from .uncertainty import BootstrapConfig, evaluate_uncertainty
 from .visualization import Cell, Table, sequence
 
-FoldSection = Literal["standalone", "coverage", "quantiles"]
+FoldSection = Literal["standalone", "coverage", "quantiles", "uncertainty"]
 
 
 @dataclass(frozen=True)
@@ -205,12 +206,15 @@ def evaluate_fold_section(
     *,
     fold: FoldSpec,
     quantiles: QuantileConfig | None = None,
+    uncertainty: BootstrapConfig | None = None,
 ) -> SectionResult:
     """Evaluate supplied test predictions; only quantile boundaries are fitted here."""
-    if name not in ("standalone", "coverage", "quantiles"):
+    if name not in ("standalone", "coverage", "quantiles", "uncertainty"):
         raise ContractError("fold section must be standalone, coverage or quantiles")
     if (name == "quantiles") != (quantiles is not None):
         raise ContractError("supply quantile options exactly for quantiles")
+    if (name == "uncertainty") != (uncertainty is not None):
+        raise ContractError("supply bootstrap options exactly for uncertainty")
     if quantiles is not None and quantiles.training_end != fold.test_start:
         raise ContractError("quantile training_end must equal fold test_start")
     for content in (plan_bytes, lock_bytes):
@@ -233,7 +237,10 @@ def evaluate_fold_section(
             for r in test
         ],
     }
-    if quantiles is not None:
+    if uncertainty is not None:
+        table, fit = evaluate_uncertainty(test, config, uncertainty)
+        details.update(fit)
+    elif quantiles is not None:
         training = tuple(r for r in rows if _role(r, fold) == "training")
         table, fit = evaluate_quantiles(training + test, config, quantiles)
         details.update(fit)

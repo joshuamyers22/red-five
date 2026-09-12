@@ -31,13 +31,20 @@ draw on your own subplot axes, and export only chosen components. No separate
 kernel installation is needed. The [quantile notebook](notebooks/quantile-diagnostics.ipynb)
 adds frozen training-only bins, separate model charts, coverage and spread tables;
 see [its API and assumptions](docs/QUANTILES.md). `make notebook-check` executes all
-four notebooks, including [temporal folds and trial history](notebooks/temporal-trials.ipynb)
+five notebooks, including [conditional uncertainty](notebooks/uncertainty.ipynb),
+[temporal folds and trial history](notebooks/temporal-trials.ipynb)
 and the original [full-report notebook](notebooks/signal-report.ipynb).
 
 The [temporal/trial APIs](docs/TEMPORAL_TRIALS.md) audit declared windows, purge
 unavailable training labels, evaluate independent fold sections, and retain
 registered/failed/unavailable/computed local trials. They do not certify upstream
 out-of-sample fitting or choose a significance policy.
+
+[Uncertainty sections](docs/UNCERTAINTY.md) add explicitly configured block-bootstrap
+intervals for each time-series contract or mean per-date cross-sectional IC.
+They remain conditional and not selection-adjusted. Real final-assessment dates
+and access policy are still [open decisions](docs/FINAL_ASSESSMENT.md), not an
+implemented holdout lock.
 
 See [the composition API](docs/COMPOSITION.md) for `evaluate_section`, `Selection`,
 `PlotOptions`, caller-owned axes, and partial exports. Existing full-report usage:
