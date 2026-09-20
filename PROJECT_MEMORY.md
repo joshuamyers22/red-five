@@ -55,3 +55,10 @@ Git history provides the audit trail.
 | `reporting-followup` | Validate representative panel size, narrow/print accessibility and production artifact recovery before expanding local rendering limits. | Engineering / research; `docs/REPORTING.md` | Before production reporting |
 | `composition-followup` | Optional widgets, arbitrary layout/artist serialization and failed-section history remain future work; standard exports replay recorded options only. | Engineering / research; `docs/COMPOSITION.md` | When requested |
 | `production-gates` | Data licensing, calibrated costs, workload budget, recovery and monitoring ownership remain open. | Unassigned | Before deployment |
+
+## Transfer extension
+
+| Key | Durable state | Evidence | Last verified |
+|---|---|---|---|
+| `transfer-target` | User corrected Echo Five to Red Five; original Dropbox plan is adapted with repository integration decisions. | `docs/TRANSFER_COEFFICIENT_PLAN.md`, `docs/TRANSFER_INTEGRATION.md` | 2026-09-20 |
+| `transfer-scope` | Local forecast alignment only; same publisher, separate transfer schema, flat modules covered by source hash. Paired Sharpe, replay and independent approvals remain open. | `src/red_five/transfer.py`, `src/red_five/transfer_io.py`, `docs/TRANSFER_VERIFICATION.md` | 2026-09-20 |

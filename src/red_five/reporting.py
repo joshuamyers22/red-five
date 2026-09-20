@@ -44,10 +44,18 @@ def seal_report(report: dict[str, object]) -> bytes:
 def verify_report(content: bytes) -> dict[str, object]:
     report = json_object(content)
     expected = report.pop("report_sha256", None)
-    if report.get("schema_version") != SCHEMA or expected != digest(canonical(report)):
+    from .transfer_io import SCHEMA as TRANSFER_SCHEMA
+    from .transfer_io import validate_transfer_report
+
+    if report.get("schema_version") not in (
+        SCHEMA,
+        TRANSFER_SCHEMA,
+    ) or expected != digest(canonical(report)):
         raise ContractError("report schema or content digest mismatch")
     if report.get("run_id") != digest(canonical(report.get("identity"))):
         raise ContractError("report run identity mismatch")
+    if report["schema_version"] == TRANSFER_SCHEMA:
+        validate_transfer_report(report)
     return report
 
 

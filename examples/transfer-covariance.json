@@ -1,0 +1,21 @@
+{
+  "schema_version": "red-five-transfer-covariance/v1",
+  "as_of": "2026-09-20T00:00:00Z",
+  "horizon": "one-day",
+  "risk_model_id": "synthetic-risk-v1",
+  "asset_ids": [
+    "A",
+    "B"
+  ],
+  "covariance_unit": "simple_return_fraction_squared",
+  "matrix": [
+    [
+      0.01,
+      0.0
+    ],
+    [
+      0.0,
+      0.04
+    ]
+  ]
+}

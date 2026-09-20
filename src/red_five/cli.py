@@ -41,11 +41,46 @@ def main(argv: list[str] | None = None) -> int:
     render.add_argument("--output-dir", required=True, type=Path)
     bundle = commands.add_parser("verify-bundle", help="verify rendered bundle hashes")
     bundle.add_argument("input", type=Path)
+    transfer = commands.add_parser("transfer", help="offline transfer diagnostics")
+    transfer_commands = transfer.add_subparsers(dest="transfer_command", required=True)
+    alignment = transfer_commands.add_parser(
+        "alignment", help="ex-ante risk-space alignment"
+    )
+    alignment.add_argument("--forecast", required=True, type=Path)
+    alignment.add_argument("--covariance", required=True, type=Path)
+    alignment.add_argument("--config", required=True, type=Path)
+    alignment.add_argument("--analysis-plan", required=True, type=Path)
+    alignment.add_argument("--lock", type=Path, default=Path("uv.lock"))
+    alignment.add_argument("--output", required=True, type=Path)
+    transfer_verify = transfer_commands.add_parser(
+        "verify", help="verify transfer evidence"
+    )
+    transfer_verify.add_argument("input", type=Path)
     args = parser.parse_args(argv)
     code = source_identity()
     try:
         output: str | None = None
-        if args.command == "render":
+        if args.command == "transfer":
+            from .transfer_io import SCHEMA as TRANSFER_SCHEMA
+            from .transfer_io import evaluate_alignment
+
+            if args.transfer_command == "verify":
+                report = verify_report(read_bytes(args.input))
+                if report["schema_version"] != TRANSFER_SCHEMA:
+                    raise ContractError("expected transfer report")
+            else:
+                report = evaluate_alignment(
+                    read_bytes(args.forecast),
+                    read_bytes(args.covariance),
+                    read_bytes(args.config),
+                    read_bytes(args.analysis_plan),
+                    read_bytes(args.lock),
+                    code_identity=code,
+                    software=software_versions(),
+                )
+                publish(args.output, seal_report(report))
+                output = str(args.output)
+        elif args.command == "render":
             from .visualization import load_report
 
             view = load_report(args.input)
@@ -91,7 +126,7 @@ def main(argv: list[str] | None = None) -> int:
             "revision": code["source_sha256"],
             "operation": args.command,
             "outcome": "error",
-            "error_code": "INPUT_INVALID"
+            "error_code": getattr(error, "code", "INPUT_INVALID")
             if isinstance(error, ContractError)
             else "IO_FAILED",
             "error_type": type(error).__name__,

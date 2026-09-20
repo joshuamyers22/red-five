@@ -1,0 +1,23 @@
+{
+  "schema_version": "red-five-transfer-forecast/v1",
+  "snapshot_id": "synthetic-diagonal",
+  "as_of": "2026-09-20T00:00:00Z",
+  "horizon": "one-day",
+  "risk_model_id": "synthetic-risk-v1",
+  "forecast_model_id": "synthetic-alpha-v1",
+  "universe_id": "synthetic-two-assets",
+  "asset_ids": [
+    "A",
+    "B"
+  ],
+  "return_unit": "simple_excess_return_fraction",
+  "weight_unit": "fraction_of_nav",
+  "expected_excess_returns": [
+    0.01,
+    0.02
+  ],
+  "implemented_weights": [
+    0.5,
+    0.25
+  ]
+}

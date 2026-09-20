@@ -37,3 +37,16 @@ Matplotlib is a presentation adapter; the locked optional notebook group provide
 JupyterLab and ipykernel. No computations move into notebook cells. Local setup,
 CI notebook/package smoke tests and deployment gates follow the production
 template; see `docs/REPORTING.md`, `docs/INFRASTRUCTURE.md` and ADR 0002.
+
+## Transfer alignment extension
+
+The user-corrected target is Red Five; the Dropbox Echo Five plan is adapted in
+[TRANSFER_COEFFICIENT_PLAN.md](docs/TRANSFER_COEFFICIENT_PLAN.md). The local first
+slice computes explicitly requested forecast-based risk-space alignment for externally
+supplied weights and a PD covariance snapshot, with immutable evidence and strict
+identity/unit/time/numerical checks. It does not fit alpha/risk models or portfolios.
+Model-conditional horizon Sharpe is permitted in this separate transfer artifact;
+the existing signal-report no-inferred-Sharpe contract is unchanged.
+The [integration map](docs/TRANSFER_INTEGRATION.md) reconciles actual package/CLI
+and resource bounds; the [development analysis plan](docs/TRANSFER_COEFFICIENT_ANALYSIS_PLAN.md)
+keeps paired inference, real-data policy and independent approvals open.

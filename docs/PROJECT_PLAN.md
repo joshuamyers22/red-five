@@ -618,3 +618,14 @@ Owners and calendar delivery dates remain unassigned; phase deadlines are depend
 Red Five has started as a local `python-data-quant` project. The initial Phase 0 slice includes strict external-input contracts, descriptive metrics in both evaluation modes, supplied-weight interval accounting, CLI and non-overwriting JSON evidence. That slice passed local lint, typing, 77 tests (91.34% package coverage), dependency/license audit, build and installed-wheel smoke. See [README](../README.md) and [initial evidence](INITIAL_VERIFICATION.md); the full Phase 0 gate is not yet claimed complete. This is not a deployed service or an approved financial decision system.
 
 The reporting/composition slices add notebook and offline views plus independent section APIs; their 130-test baseline is recorded in [composition evidence](COMPOSITION_VERIFICATION.md). Fixed-training quantiles and fold/trial support are recorded in [quantile verification](QUANTILE_VERIFICATION.md) and [temporal verification](TEMPORAL_VERIFICATION.md). The latest local extension adds conditional block uncertainty and a fifth notebook; current evidence is in [uncertainty verification](UNCERTAINTY_VERIFICATION.md). Final-assessment/selection policy, breadth, paired marginal replay, Postgres and scheduling remain subsequent gates. No remote CI or deployment is claimed for the current local edits.
+
+## Transfer coefficient extension — 2026-09-20
+
+The user identified `red-five` as the intended repository for the Dropbox Echo Five
+transfer-coefficient plan. [The adapted feature plan](TRANSFER_COEFFICIENT_PLAN.md)
+and [integration map](TRANSFER_INTEGRATION.md) define its staged delivery. The first
+local slice adds supplied-snapshot ex-ante alignment, diagonal centering diagnostics
+and a synthetic CLI/evidence path. It remains separate from observed paired Sharpe
+differences and does not close baseline-replay, inference, final-assessment or
+production gates. [Verification](TRANSFER_VERIFICATION.md) records scoped evidence;
+independent math and fixture review remain open.

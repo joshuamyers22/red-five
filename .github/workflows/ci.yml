@@ -30,6 +30,8 @@ jobs:
           "$project_dir/build/wheel-smoke/bin/red-five" render "$project_dir/build/wheel-report.json" --output-dir "$project_dir/build/wheel-bundle"
           "$project_dir/build/wheel-smoke/bin/red-five" verify-bundle "$project_dir/build/wheel-bundle"
           "$project_dir/build/wheel-smoke/bin/python" "$project_dir/tools/smoke_sections.py" "$project_dir" "$project_dir/build/wheel-components"
+          "$project_dir/build/wheel-smoke/bin/red-five" transfer alignment --forecast "$project_dir/examples/transfer-forecast.json" --covariance "$project_dir/examples/transfer-covariance.json" --config "$project_dir/examples/transfer-config.json" --analysis-plan "$project_dir/docs/TRANSFER_COEFFICIENT_ANALYSIS_PLAN.md" --lock "$project_dir/uv.lock" --output "$project_dir/build/wheel-transfer.json"
+          "$project_dir/build/wheel-smoke/bin/red-five" transfer verify "$project_dir/build/wheel-transfer.json"
       - name: Execute synthetic notebook
         run: make notebook-check
       - name: Audit notebook environment

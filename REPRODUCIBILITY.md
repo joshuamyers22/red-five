@@ -60,3 +60,15 @@ version. Checksums detect change; they do not authenticate the publisher.
 
 Notebooks explore and communicate; production calculations live in typed modules
 with regression tests. A notebook result is not release evidence by itself.
+
+## Transfer alignment evidence
+
+Use README's synthetic transfer commands with the frozen environment. The explicit
+evaluation timestamp is part of configuration, so exact reruns remain idempotent.
+Forecast/covariance/config/plan/lock bytes, source revision digest, software and
+NumPy BLAS name/version identify evidence. Different timestamps, source edits,
+inputs or environments require a new output path. Floating-point bytes may differ
+across BLAS/platforms; this is not a bitwise cross-platform guarantee. Compare
+mathematical fixtures at their declared tolerances. Transfer schema v1 reuses the
+local create-only publisher; verification checks internal integrity and declared
+schema invariants, not upstream authenticity. No stochastic seed is used by alignment.
