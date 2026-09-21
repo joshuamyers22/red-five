@@ -24,8 +24,9 @@ uv run red-five verify build/example-report.json
 
 ## Transfer alignment
 
-An explicitly enabled offline diagnostic compares supplied forecast alpha, covariance
-and implemented weights in risk space. Run the synthetic snapshot:
+Transfer alignment is implemented and owner-approved for `main` as an offline
+research diagnostic. It compares supplied forecast alpha, covariance and implemented
+weights in risk space. Run the synthetic snapshot:
 
 ```sh
 uv run --frozen red-five transfer alignment \
@@ -40,7 +41,7 @@ uv run --frozen red-five transfer verify build/transfer-alignment.json
 The result is `ex_ante_transfer_alignment`, conditional on the supplied forecast
 model. It does not estimate true alpha or realized implementation drag. Paired
 Sharpe comparison, replay and transfer notebook views remain planned. See
-[integration and input contracts](docs/TRANSFER_INTEGRATION.md),
+[CLI, input contracts and Python API](docs/TRANSFER_INTEGRATION.md),
 [the adapted Dropbox plan](docs/TRANSFER_COEFFICIENT_PLAN.md),
 [analysis plan](docs/TRANSFER_COEFFICIENT_ANALYSIS_PLAN.md), and
 [verification](docs/TRANSFER_VERIFICATION.md). No live eligibility or verdict.

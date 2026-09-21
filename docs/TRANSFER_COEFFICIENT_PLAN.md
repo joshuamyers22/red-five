@@ -1,6 +1,6 @@
 # Red Five — Transfer Coefficient Project Plan
 
-Status: **adapted implementation plan; local alignment slice only; no production approval**  
+Status: **first alignment slice implemented; owner-approved for main on 2026-09-20; research-only**
 Prepared: 2026-09-20  
 Source: Dropbox `echo-five-transfer-coefficient-project-plan.md`; its linked
 transfer-coefficient note was not supplied in the local Dropbox copy.  
@@ -17,6 +17,25 @@ examples below remain design proposals, not installed functionality.
 Original Dropbox source SHA-256: `684d4de3a1c22d3b577131608953c6049fbbb9b3d137fb8fecb35bc16977758e`.
 The original source is preserved in Dropbox. This repository adaptation governs
 Red Five integration; the mathematical and later evidence gates below are retained.
+
+## Current delivery status — 2026-09-20
+
+The owner approved implementation commit `5530c38` for merge to `main`.
+[Verification evidence](TRANSFER_VERIFICATION.md) records 259 passing tests,
+92.58% coverage, static checks, build, dependency audit and installed-wheel smoke.
+
+| Plan area | Delivered status | Remaining gate |
+|---|---|---|
+| Phase 0: integration discovery | Actual Red Five package, CLI, evidence and local bounds mapped; first slice approved for main | Real-data conventions, assessment policy and reviewer assignments |
+| Phase 1: alignment | Pure PD-covariance calculation, diagonal diagnostics and adversarial fixtures implemented | Independent mathematical review |
+| Phase 2: paired comparison | Planned | Sharpe conventions, paired block-bootstrap implementation and calibration |
+| Phase 3: evidence and CLI | Single-snapshot alignment JSON, shared atomic publication and verifier implemented | Paired-comparison evidence, fuller replay and source-verification contracts |
+| Phases 4–6 | Planned | Real-data replay, production workload/operations evidence and consequential-use approval |
+
+Use the [delivered command and Python API](TRANSFER_INTEGRATION.md), which accept
+JSON snapshots. The Parquet and paired-comparison commands later in this plan are
+future designs. Merge approval covers the research implementation; no deployment,
+live eligibility or independent domain-review completion is recorded.
 
 ## 1. Outcome
 

@@ -55,12 +55,70 @@ ill-conditioned PD covariance produces a retained `numerically_unreliable` resul
 with null metrics. Overall evidence status stays `insufficient_evidence` even
 when the alignment calculation succeeds.
 
+## Input files and configuration
+
+All fields in the three versioned JSON examples are required; unknown or duplicate
+keys fail. Numeric arrays contain finite JSON numbers, not strings or booleans.
+
+| Input | Contract and example |
+|---|---|
+| Forecast | [Forecast JSON](../examples/transfer-forecast.json): unique ordered asset IDs, expected excess returns, supplied weights, model/universe/snapshot IDs, aware as-of time and horizon |
+| Covariance | [Covariance JSON](../examples/transfer-covariance.json): same asset order, risk-model ID, horizon and as-of time; square symmetric PD matrix |
+| Configuration | [Config JSON](../examples/transfer-config.json): analysis ID, explicit enable flag, evaluation time and numerical policy |
+| Analysis plan | Required nonempty file; example is the [synthetic development plan](TRANSFER_COEFFICIENT_ANALYSIS_PLAN.md) |
+| Lockfile | Defaults to `uv.lock`; provide `--lock /path/to/uv.lock` when running outside the repository |
+
+Forecast return units must be `simple_excess_return_fraction`; weight units must
+be `fraction_of_nav`; covariance units must be `simple_return_fraction_squared`.
+Forecast and covariance as-of times must match after UTC normalization and cannot
+exceed `evaluated_at_utc`. Asset vectors/matrix rows and columns must agree exactly;
+there is no automatic reordering or repair.
+
+The config requires `enabled: true` to evaluate. `max_condition_number` accepts
+[1, 1e12] (example: 1e10). `symmetry_relative_tolerance` and `bound_tolerance`
+accept [0, 1e-10] (example: 1e-12). Symmetry tolerance classifies the error;
+nonzero asymmetry still fails. Set `diagonal_diagnostic: true` only for a diagonal
+matrix; otherwise use false. It adds risk-coordinate means and the optional
+Pearson diagnostic without replacing the canonical cosine.
+
+The example produces alignment approximately 1, model and optimal model Sharpe
+approximately 0.1414213562, and portfolio risk approximately 0.0707106781 for the
+one-day horizon. Its constant risk coordinates make Pearson unavailable (`null`).
+Changing inputs, config, plan, code or environment creates a different identity;
+use a new output path. Verification needs only the output artifact and checks its
+internal integrity, not the authenticity of retained source inputs.
+
+## Python API
+
+The library core performs no file I/O. Supply immutable tuples in identical asset
+order and keep provenance in the calling adapter:
+
+```python
+from red_five.transfer import AlignmentInput, AlignmentPolicy, calculate_alignment
+
+snapshot = AlignmentInput(
+    asset_ids=("A", "B"),
+    covariance_asset_ids=("A", "B"),
+    expected_excess_returns=(0.01, 0.02),
+    implemented_weights=(0.5, 0.25),
+    covariance=((0.01, 0.0), (0.0, 0.04)),
+)
+result = calculate_alignment(snapshot, AlignmentPolicy(diagonal_diagnostic=True))
+print(result.status, result.ex_ante_transfer_alignment)
+```
+
+The CLI uses this same calculation through `transfer_io.evaluate_alignment`,
+which adds file contracts and evidence. Library callers must inspect `status` and
+`reason_code` before using nullable metrics. Invalid contracts raise `TransferError`,
+a `ContractError` subclass with a stable `.code`.
+
 ## Open gates and owners
 
-Josh is the existing project owner. Quant, data, independent fixture-review,
-model-risk and operations approval assignments remain open; this update does not
-invent approval. Phase 0 engineering discovery is complete for the local first
-slice. Full Phase 0 approval and Phase 1 independent mathematical review remain open.
+Josh approved implementation commit `5530c38` for merge to `main` on 2026-09-20.
+Engineering discovery and integration are accepted for the first research slice.
+Quant, data, independent fixture-review, model-risk and operations reviewer
+assignments remain open. Phase 1 independent mathematical review and the full
+real-data Phase 0 decisions remain open.
 Phases 2–6 require paired-return contracts/calibration, replay, production evidence
 and consequential-use decisions. Jobson–Korkie remains blocked by the source
 formula issue. PSD risk models require a separate reviewed ADR.

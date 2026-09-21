@@ -624,8 +624,8 @@ The reporting/composition slices add notebook and offline views plus independent
 The user identified `red-five` as the intended repository for the Dropbox Echo Five
 transfer-coefficient plan. [The adapted feature plan](TRANSFER_COEFFICIENT_PLAN.md)
 and [integration map](TRANSFER_INTEGRATION.md) define its staged delivery. The first
-local slice adds supplied-snapshot ex-ante alignment, diagonal centering diagnostics
-and a synthetic CLI/evidence path. It remains separate from observed paired Sharpe
-differences and does not close baseline-replay, inference, final-assessment or
+local slice, approved by the owner for main on 2026-09-20, adds supplied-snapshot
+ex-ante alignment, diagonal centering diagnostics and a synthetic CLI/evidence path.
+It remains separate from observed paired Sharpe differences and does not close baseline-replay, inference, final-assessment or
 production gates. [Verification](TRANSFER_VERIFICATION.md) records scoped evidence;
 independent math and fixture review remain open.

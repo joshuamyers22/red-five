@@ -66,3 +66,14 @@ local publisher retains its documented production-durability limitation.
 
 Durable scope and architecture are linked from PROJECT_MEMORY.md,
 TRANSFER_INTEGRATION.md and TRANSFER_COEFFICIENT_ANALYSIS_PLAN.md.
+
+## Owner approval for main — 2026-09-20
+
+The owner approved implementation commit `5530c38` and explicitly requested a push
+to `main` with updated documentation. Approval covers the delivered offline research
+slice. The independent mathematical/end-to-end and production gates above retain
+their recorded status. The merge follow-up updates documentation only; numerical
+source, tests, dependency lock and CI configuration are unchanged from the verified
+implementation. Local Markdown links, documented example values and diff whitespace
+were checked for this follow-up. The prior quality/build/audit evidence applies to
+the unchanged implementation; remote CI results are not claimed here.

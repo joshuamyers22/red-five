@@ -113,3 +113,14 @@ Successful calculations produce `data_status: valid` and a decision status of
 and emit one versioned error event to stderr, without raw data or sensitive paths.
 `verify` checks stored schema/content and run-identity hashes; it does not rerun
 metrics, prove authorship or certify financial assumptions.
+
+## Transfer alignment snapshots
+
+`red-five transfer alignment` uses separate versioned JSON snapshots and a transfer
+config, rather than the signal/weight CSV schemas above. The implemented fields,
+units, timestamps, covariance rules and examples are documented in the
+[transfer input contract](TRANSFER_INTEGRATION.md#input-files-and-configuration).
+Transfer reports use `red-five-transfer-report/v1`, with explicit evaluation time
+bound into identity and `insufficient_evidence` decision status. Their model Sharpe
+is conditional on forecasts for the declared horizon; it is not a realized Sharpe
+computed from the supplied-weight ledger.

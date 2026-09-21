@@ -61,4 +61,4 @@ Git history provides the audit trail.
 | Key | Durable state | Evidence | Last verified |
 |---|---|---|---|
 | `transfer-target` | User corrected Echo Five to Red Five; original Dropbox plan is adapted with repository integration decisions. | `docs/TRANSFER_COEFFICIENT_PLAN.md`, `docs/TRANSFER_INTEGRATION.md` | 2026-09-20 |
-| `transfer-scope` | Local forecast alignment only; same publisher, separate transfer schema, flat modules covered by source hash. Paired Sharpe, replay and independent approvals remain open. | `src/red_five/transfer.py`, `src/red_five/transfer_io.py`, `docs/TRANSFER_VERIFICATION.md` | 2026-09-20 |
+| `transfer-scope` | Forecast alignment implementation 5530c38 approved by owner for main on 2026-09-20; same publisher and separate schema. Paired Sharpe, replay and independent domain/production approvals remain open. | `src/red_five/transfer.py`, `src/red_five/transfer_io.py`, `docs/TRANSFER_VERIFICATION.md` | 2026-09-20 |
