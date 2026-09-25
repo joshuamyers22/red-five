@@ -19,7 +19,7 @@ dependencies = [
 "red-five-dataset" = "red_five.dataset_cli:main"
 
 [build-system]
-requires = ["hatchling==1.32.0"]
+requires = ["hatchling==1.32.4"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
