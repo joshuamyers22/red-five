@@ -4,6 +4,10 @@ Notable changes are recorded here using semantic versioning.
 
 ## Unreleased
 
+- Refresh locked JupyterLab, Tornado and urllib3 dependencies to clear the CI notebook vulnerability audit.
+
+- Allow Polars 2.x and lock Polars 2.0.0 for reproducible development.
+
 - Add explicit offline `transfer alignment` and `transfer verify` commands with
   forecast-based risk-space alignment, diagonal diagnostics and fail-closed inputs.
 - Reuse source identity and immutable publication with transfer schema v1.
