@@ -20,7 +20,7 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: uv run python tools/verify_release.py --tag "$RELEASE_TAG"
       - run: make check audit build
-      - uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+      - uses: anchore/sbom-action@dfcb83b97731532d72be422cbc51ee64adb6fd56 # v0.24.4
         with:
           path: ./dist
           artifact-name: release-sbom.cdx.json
